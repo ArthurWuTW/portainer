@@ -1,118 +1,77 @@
-<p align="center">
-  <img title="portainer" src='https://github.com/portainer/portainer/blob/develop/app/assets/images/portainer-github-banner.png?raw=true' />
-</p>
+# Portainer CE — Service Instances
 
-**Portainer Community Edition** is a lightweight service delivery platform for containerized applications that can be used to manage Docker, Swarm, Kubernetes and ACI environments. It is designed to be as simple to deploy as it is to use. The application allows you to manage all your orchestrator resources (containers, images, volumes, networks and more) through a 'smart' GUI and/or an extensive API.
+This fork of Portainer Community Edition adds **Service Instances**: a way to define a service once and roll it out to many environments in a single operation, with live monitoring and scheduled deployments.
 
-Portainer consists of a single container that can run on any cluster. It can be deployed as a Linux container or a Windows native container.
+A Service Instance is a logical orchestration object that groups a set of target environments (an endpoint group or a list of individual environments) and deploys a shared Compose definition to all of them.
 
-**Portainer Business Edition** builds on the open-source base and includes a range of advanced features and functions (like RBAC and Support) that are specific to the needs of business users.
+## Features
 
-- [Compare Portainer CE and Compare Portainer BE](https://www.portainer.io/features)
-- [Take3 – get 3 free nodes of Portainer Business for as long as you want them](https://www.portainer.io/take-3)
-- [Portainer BE install guide](https://academy.portainer.io/install/)
-
-## Service Instances
-
-**Service Instances** let you define a service once and roll it out to many environments in a single operation. A Service Instance is a logical orchestration object that groups a set of target environments (an endpoint group or a list of individual environments) and deploys a shared Compose definition to all of them.
-
-### Capabilities
+### Service Instances
 
 - **Define a service** — name, description, Compose file, and environment variables.
 - **Multi-target deployment** — target an entire endpoint group or a hand-picked set of environments.
 - **Full lifecycle control** — deploy, start, stop, redeploy, and refresh with a single action. Operations run asynchronously and are tracked end to end.
 - **Per-target visibility** — every target reports its own status; the instance shows an aggregated status (running, partial, failed, etc.).
 - **Operation history** — a full audit trail of every operation with per-target results and errors.
-- **Live monitoring** — a Monitor tab that auto-refreshes target status every 3 seconds (toggleable).
-- **Scheduled builds** — schedule a deploy for a future time. Images are pulled on all targets immediately so the deploy is fast and reliable when the time comes. List and cancel pending scheduled builds.
 
-### How it works
+### Monitor
+
+- A **Monitor tab** on each instance that shows live per-target status.
+- Auto-refreshes target status every 3 seconds, with a toggle to disable auto-refresh.
+
+### Deploy & Scheduled Builds
+
+- A **Deploy tab** with a Compose editor to update the service definition and **Deploy now**.
+- **Scheduled builds** — schedule a deploy for a future time. Images are pulled on all targets immediately so the deploy is fast and reliable when the time comes.
+- **List and cancel** pending scheduled builds, with per-target build status (pending, pulling, image ready, deployed, failed, cancelled).
+
+## How it works
 
 1. Create a Service Instance with a Compose file and choose its targets.
-2. Trigger a lifecycle operation (deploy, start, stop, redeploy, or refresh).
+2. Trigger a lifecycle operation (deploy, start, stop, redeploy, or refresh), or schedule a build for a future time.
 3. Portainer resolves the target snapshot, runs the operation sequentially with fail-fast semantics, and persists per-target results as it goes.
 4. Watch progress in the UI — the instance status, per-target results, and operation history update in real time.
 
-Service Instances are available in the sidebar under **Service Instances** and are fully exposed through the REST API (`/api/service-instances`, `/api/service-instance-operations`, and scheduled-build endpoints).
+Service Instances are available in the sidebar under **Service Instances** and are fully exposed through the REST API.
 
-## Latest Version
+## REST API
 
-Portainer CE is updated regularly. We aim to do an update release every couple of months.
+All endpoints require authentication (JWT or API key).
 
-[![latest version](https://img.shields.io/github/v/release/portainer/portainer?color=%2344cc11&label=Latest%20release&style=for-the-badge)](https://github.com/portainer/portainer/releases/latest)
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/service-instances` | List service instances |
+| POST | `/api/service-instances` | Create a service instance |
+| GET | `/api/service-instances/{id}` | Inspect a service instance |
+| PUT | `/api/service-instances/{id}` | Update a service instance |
+| DELETE | `/api/service-instances/{id}` | Delete a service instance |
+| POST | `/api/service-instances/{id}/deploy` | Deploy to all targets (async, 202 + operation) |
+| POST | `/api/service-instances/{id}/start` | Start on all targets (async) |
+| POST | `/api/service-instances/{id}/stop` | Stop on all targets (async) |
+| POST | `/api/service-instances/{id}/redeploy` | Redeploy on all targets (async) |
+| POST | `/api/service-instances/{id}/refresh` | Recompute aggregated status (sync) |
+| POST | `/api/service-instances/{id}/schedule-build` | Schedule a build for a future time |
+| GET | `/api/service-instances/{id}/scheduled-builds` | List scheduled builds |
+| DELETE | `/api/service-instance-scheduled-builds/{id}` | Cancel a scheduled build |
+| GET | `/api/service-instances/{id}/targets` | Resolved targets with per-target status |
+| GET | `/api/service-instances/{id}/operations` | Operation history (newest first) |
+| GET | `/api/service-instance-operations/{id}` | Inspect a single operation |
 
-## Getting started
+## Statuses
 
-- [Deploy Portainer](https://docs.portainer.io/start/install-ce)
-- [Documentation](https://docs.portainer.io)
-- [Contribute to the project](https://docs.portainer.io/contribute/contribute)
+- **Instance status**: unknown, deploying, running, stopped, partial, failed.
+- **Operation status**: pending, running, success, partial success, failed, cancelled.
+- **Per-target status**: pending, running, success, failed, skipped.
+- **Scheduled build status**: pending, pulling, image ready, deployed, failed, cancelled.
 
-## Features & Functions
+## Known limitations (MVP)
 
-View [this](https://www.portainer.io/features) table to see all of the Portainer CE functionality and compare to Portainer Business.
+- Compose source is the web editor only (no file upload or git repository yet).
+- Docker Compose stacks only (Swarm/Kubernetes targets are not supported).
+- No automatic rollback; a partial failure requires a manual redeploy.
+- Deleting an instance does not undeploy its stacks (they are kept as regular stacks).
 
-## Getting help
+## Design docs
 
-Portainer CE is an open source project and is supported by the community. You can buy a supported version of Portainer at portainer.io
-
-Learn more about Portainer's community support channels [here.](https://www.portainer.io/resources/get-help/get-support)
-
-- Issues: https://github.com/portainer/portainer/issues
-- Slack (chat): [https://portainer.io/slack](https://portainer.io/slack)
-
-You can join the Portainer Community by visiting [https://www.portainer.io/join-our-community](https://www.portainer.io/join-our-community). This will give you advance notice of events, content and other related Portainer content.
-
-## Reporting bugs and contributing
-
-- Want to report a bug or request a feature? Please open [an issue](https://github.com/portainer/portainer/issues/new).
-- Want to help us build **_portainer_**? Follow our [contribution guidelines](https://docs.portainer.io/contribute/contribute) to build it locally and make a pull request.
-
-## Generating API types
-
-The frontend consumes a TypeScript API client (SDK functions and request/response types) that is generated from the Go API's Swagger annotations. Regenerate it after any API change — a new endpoint, a changed request/response shape, or a removed endpoint:
-
-```bash
-make generate-api
-```
-
-This runs the following pipeline:
-
-```
-Go Swagger annotations
-  → dist/docs/swagger.yaml       (make docs-build, via swaggo/swag)
-  → dist/docs/openapi.yaml       (swagger2openapi + validation)
-  → app/react/portainer/generated-api/portainer/   (hey-api/openapi-ts)
-```
-
-The generator is configured in [`openapi-ts.config.ts`](./openapi-ts.config.ts), which controls the output path, plugins, and tag filters (for example, `deprecated` endpoints and `edge_agent`-tagged routes are excluded).
-
-The generated files live in `app/react/portainer/generated-api/portainer/` and must **not** be edited by hand — your changes would be overwritten on the next run. Import the generated SDK functions and types instead of writing direct HTTP calls:
-
-- `@api/sdk.gen` — SDK functions
-- `@api/types.gen` — request/response types
-
-See [Adding api docs](./CONTRIBUTING.md#adding-api-docs) for how to annotate handlers so they are picked up by the generator.
-
-## Security
-
-For information about reporting security vulnerabilities, please see our [Security Policy](SECURITY.md).
-
-## Work for us
-
-If you are a developer, and our code in this repo makes sense to you, we would love to hear from you. We are always on the hunt for awesome devs, either freelance or employed. Drop us a line to success@portainer.io with your details and/or visit our [careers page](https://apply.workable.com/portainer/).
-
-## Privacy
-
-**To make sure we focus our development effort in the right places we need to know which features get used most often. To give us this information we use [Matomo Analytics](https://matomo.org/), which is hosted in Germany and is fully GDPR compliant.**
-
-When Portainer first starts, you are given the option to DISABLE analytics. If you **don't** choose to disable it, we collect anonymous usage as per [our privacy policy](https://www.portainer.io/legal/privacy-policy). **Please note**, there is no personally identifiable information sent or stored at any time and we only use the data to help us improve Portainer.
-
-## Limitations
-
-Portainer supports "Current - 2 docker versions only. Prior versions may operate, however these are not supported.
-
-## Licensing
-
-Portainer is licensed under the zlib license. See [LICENSE](./LICENSE) for reference.
-
-Portainer also contains code from open source projects. See [ATTRIBUTIONS.md](./ATTRIBUTIONS.md) for a list.
+- [SERVICE_INSTANCE_DESIGN.md](./SERVICE_INSTANCE_DESIGN.md) — domain model, persistence, service layer, API, and authorization design.
+- [ARCHITECTURE_ANALYSIS.md](./ARCHITECTURE_ANALYSIS.md) — how Service Instances integrate with the existing Portainer codebase.
