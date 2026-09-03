@@ -262,6 +262,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/api", h.ServiceInstanceHandler).ServeHTTP(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/service-instance-operations"):
 		http.StripPrefix("/api", h.ServiceInstanceHandler).ServeHTTP(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/service-instance-scheduled-builds"):
+		http.StripPrefix("/api", h.ServiceInstanceHandler).ServeHTTP(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/settings"):
 		http.StripPrefix("/api", h.SettingsHandler).ServeHTTP(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/stacks"):

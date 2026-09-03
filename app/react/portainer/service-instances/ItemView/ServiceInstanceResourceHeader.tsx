@@ -1,4 +1,4 @@
-import { Boxes, Play, RefreshCw, RotateCw, Square } from 'lucide-react';
+import { Boxes, Play, Square } from 'lucide-react';
 
 import { Badge } from '@@/Badge';
 import { Button } from '@@/buttons';
@@ -7,9 +7,6 @@ import { ResourceDetailHeader } from '@@/ResourceDetailHeader/ResourceDetailHead
 
 import { ServiceInstance, ServiceInstanceStatuses } from '../types';
 import {
-  useDeployServiceInstance,
-  useRedeployServiceInstance,
-  useRefreshServiceInstance,
   useStartServiceInstance,
   useStopServiceInstance,
 } from '../queries/useServiceInstanceLifecycle';
@@ -40,17 +37,10 @@ interface Props {
 }
 
 export function ServiceInstanceResourceHeader({ instance }: Props) {
-  const deployMutation = useDeployServiceInstance();
   const startMutation = useStartServiceInstance();
   const stopMutation = useStopServiceInstance();
-  const redeployMutation = useRedeployServiceInstance();
-  const refreshMutation = useRefreshServiceInstance();
 
-  const isBusy =
-    deployMutation.isLoading ||
-    startMutation.isLoading ||
-    stopMutation.isLoading ||
-    redeployMutation.isLoading;
+  const isBusy = startMutation.isLoading || stopMutation.isLoading;
 
   return (
     <ResourceDetailHeader
@@ -64,15 +54,6 @@ export function ServiceInstanceResourceHeader({ instance }: Props) {
       description={instance.Description || undefined}
       actionBar={
         <div className="flex items-center gap-2">
-          <Button
-            color="primary"
-            icon={Play}
-            disabled={isBusy}
-            data-cy="service-instance-deploy-button"
-            onClick={() => deployMutation.mutate(instance.Id)}
-          >
-            Deploy
-          </Button>
           <Button
             color="secondary"
             icon={Play}
@@ -90,24 +71,6 @@ export function ServiceInstanceResourceHeader({ instance }: Props) {
             onClick={() => stopMutation.mutate(instance.Id)}
           >
             Stop
-          </Button>
-          <Button
-            color="secondary"
-            icon={RotateCw}
-            disabled={isBusy}
-            data-cy="service-instance-redeploy-button"
-            onClick={() => redeployMutation.mutate(instance.Id)}
-          >
-            Redeploy
-          </Button>
-          <Button
-            color="secondary"
-            icon={RefreshCw}
-            disabled={refreshMutation.isLoading}
-            data-cy="service-instance-refresh-button"
-            onClick={() => refreshMutation.mutate(instance.Id)}
-          >
-            Refresh
           </Button>
         </div>
       }

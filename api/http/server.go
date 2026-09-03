@@ -250,7 +250,9 @@ func (server *Server) Start(ctx context.Context) error {
 
 	var serviceInstanceHandler = serviceinstances.NewHandler(requestBouncer)
 	serviceInstanceHandler.DataStore = server.DataStore
-	serviceInstanceHandler.Service = serviceinstance.NewService(server.DataStore, server.FileService, server.StackDeployer)
+	serviceInstanceService := serviceinstance.NewService(server.DataStore, server.FileService, server.StackDeployer, server.DockerClientFactory)
+	serviceInstanceHandler.Service = serviceInstanceService
+	serviceInstanceService.RecoverScheduledBuilds()
 	stackHandler.DataStore = server.DataStore
 	stackHandler.DockerClientFactory = server.DockerClientFactory
 	stackHandler.FileService = server.FileService

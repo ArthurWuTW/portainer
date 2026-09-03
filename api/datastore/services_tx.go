@@ -76,6 +76,10 @@ func (tx *StoreTx) ServiceInstanceOperation() dataservices.ServiceInstanceOperat
 	return tx.store.ServiceInstanceOperationService.Tx(tx.tx)
 }
 
+func (tx *StoreTx) ServiceInstanceScheduledBuild() dataservices.ServiceInstanceScheduledBuildService {
+	return tx.store.ServiceInstanceScheduledBuildService.Tx(tx.tx)
+}
+
 func (tx *StoreTx) APIKeyRepository() dataservices.APIKeyRepository { return nil }
 
 func (tx *StoreTx) Settings() dataservices.SettingsService {

@@ -2144,6 +2144,15 @@ type (
 	// ServiceInstanceTargetStatus represents the status of a single target within a service instance operation
 	ServiceInstanceTargetStatus int
 
+	// ServiceInstanceScheduledBuildID represents a service instance scheduled build identifier
+	ServiceInstanceScheduledBuildID int
+
+	// ServiceInstanceScheduledBuildStatus represents the status of a service instance scheduled build
+	ServiceInstanceScheduledBuildStatus int
+
+	// ServiceInstanceScheduledBuildTargetStatus represents the status of a service instance scheduled build on a single target
+	ServiceInstanceScheduledBuildTargetStatus int
+
 	// ServiceInstance represents a logical orchestration object that groups multiple
 	// environments(endpoints) and deploys a shared compose definition to all of them.
 	ServiceInstance struct {
@@ -2204,6 +2213,42 @@ type (
 		FinishedAt *int64 `json:"FinishedAt,omitempty"`
 		// Per-target results of the operation
 		Results []ServiceInstanceTargetResult `json:"Results"`
+	}
+
+	// ServiceInstanceScheduledBuild represents a scheduled build for a service instance.
+	// The images referenced by the compose file are pulled on all targets immediately,
+	// and the compose is deployed at the configured timestamp.
+	ServiceInstanceScheduledBuild struct {
+		// Scheduled build identifier
+		ID ServiceInstanceScheduledBuildID `json:"Id" example:"1"`
+		// ServiceInstanceID is the service instance this scheduled build belongs to
+		ServiceInstanceID ServiceInstanceID `json:"ServiceInstanceId" example:"1"`
+		// ComposeFile is the compose definition to deploy at the scheduled time
+		ComposeFile string `json:"ComposeFile"`
+		// DeployAt is the unix timestamp when the compose should be deployed
+		DeployAt int64 `json:"DeployAt" example:"1587399600"`
+		// Status of the scheduled build
+		Status ServiceInstanceScheduledBuildStatus `json:"Status" example:"1"`
+		// UserID of the user who scheduled the build
+		UserID UserID `json:"UserId" example:"1"`
+		// The date in unix time when the scheduled build was created
+		CreatedAt int64 `json:"CreatedAt" example:"1587399600"`
+		// The date in unix time when the scheduled build finished
+		FinishedAt *int64 `json:"FinishedAt,omitempty"`
+		// Error message if the scheduled build failed
+		Error string `json:"Error,omitempty"`
+		// Per-target results of the scheduled build
+		Results []ServiceInstanceScheduledBuildTargetResult `json:"Results"`
+	}
+
+	// ServiceInstanceScheduledBuildTargetResult represents the result of a scheduled build on a single target environment
+	ServiceInstanceScheduledBuildTargetResult struct {
+		// Environment(endpoint) identifier
+		EnvironmentID EndpointID `json:"EnvironmentId" example:"1"`
+		// Status of the scheduled build on this target
+		Status ServiceInstanceScheduledBuildTargetStatus `json:"Status" example:"3"`
+		// Error message if the scheduled build failed on this target
+		Error string `json:"Error,omitempty"`
 	}
 )
 
@@ -2919,6 +2964,38 @@ const (
 	ServiceInstanceTargetStatusFailed
 	// ServiceInstanceTargetStatusSkipped means the target operation was skipped (fail-fast)
 	ServiceInstanceTargetStatusSkipped
+)
+
+const (
+	// ServiceInstanceScheduledBuildStatusPending means the scheduled build is waiting for its deploy time
+	ServiceInstanceScheduledBuildStatusPending ServiceInstanceScheduledBuildStatus = iota + 1
+	// ServiceInstanceScheduledBuildStatusPulling means images are being pulled on the targets
+	ServiceInstanceScheduledBuildStatusPulling
+	// ServiceInstanceScheduledBuildStatusDeployed means the scheduled deploy completed
+	ServiceInstanceScheduledBuildStatusDeployed
+	// ServiceInstanceScheduledBuildStatusFailed means the scheduled build failed
+	ServiceInstanceScheduledBuildStatusFailed
+	// ServiceInstanceScheduledBuildStatusCancelled means the scheduled build was cancelled
+	ServiceInstanceScheduledBuildStatusCancelled
+	// ServiceInstanceScheduledBuildStatusImageReady means all images have been pulled on the targets and the build is waiting for its deploy time
+	ServiceInstanceScheduledBuildStatusImageReady
+)
+
+const (
+	// ServiceInstanceScheduledBuildTargetStatusPending means the target is waiting for its images to be pulled
+	ServiceInstanceScheduledBuildTargetStatusPending ServiceInstanceScheduledBuildTargetStatus = iota + 1
+	// ServiceInstanceScheduledBuildTargetStatusPulling means images are being pulled on the target
+	ServiceInstanceScheduledBuildTargetStatusPulling
+	// ServiceInstanceScheduledBuildTargetStatusImageReady means all images have been pulled on the target
+	ServiceInstanceScheduledBuildTargetStatusImageReady
+	// ServiceInstanceScheduledBuildTargetStatusDeployed means the compose has been deployed on the target
+	ServiceInstanceScheduledBuildTargetStatusDeployed
+	// ServiceInstanceScheduledBuildTargetStatusFailed means the scheduled build failed on the target
+	ServiceInstanceScheduledBuildTargetStatusFailed
+	// ServiceInstanceScheduledBuildTargetStatusSkipped means the target was skipped (fail-fast)
+	ServiceInstanceScheduledBuildTargetStatusSkipped
+	// ServiceInstanceScheduledBuildTargetStatusCancelled means the scheduled build was cancelled for the target
+	ServiceInstanceScheduledBuildTargetStatusCancelled
 )
 
 func DefaultEndpointSecuritySettings() EndpointSecuritySettings {

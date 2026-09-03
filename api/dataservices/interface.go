@@ -24,6 +24,7 @@ type (
 		APIKeyRepository() APIKeyRepository
 		ServiceInstance() ServiceInstanceService
 		ServiceInstanceOperation() ServiceInstanceOperationService
+		ServiceInstanceScheduledBuild() ServiceInstanceScheduledBuildService
 		Settings() SettingsService
 		Snapshot() SnapshotService
 		SSLSettings() SSLSettingsService
@@ -182,6 +183,13 @@ type (
 		BaseCRUD[portainer.ServiceInstanceOperation, portainer.ServiceInstanceOperationID]
 		GetNextIdentifier() int
 		ReadAllByServiceInstanceID(serviceInstanceID portainer.ServiceInstanceID) ([]portainer.ServiceInstanceOperation, error)
+	}
+
+	// ServiceInstanceScheduledBuildService represents a service for managing service instance scheduled build data
+	ServiceInstanceScheduledBuildService interface {
+		BaseCRUD[portainer.ServiceInstanceScheduledBuild, portainer.ServiceInstanceScheduledBuildID]
+		GetNextIdentifier() int
+		ReadAllByServiceInstanceID(serviceInstanceID portainer.ServiceInstanceID) ([]portainer.ServiceInstanceScheduledBuild, error)
 	}
 
 	// APIKeyRepositoryService

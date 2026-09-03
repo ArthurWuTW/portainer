@@ -46,6 +46,12 @@ func NewHandler(bouncer security.BouncerService) *Handler {
 		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceRedeploy))).Methods(http.MethodPost)
 	h.Handle("/service-instances/{id}/refresh",
 		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceRefresh))).Methods(http.MethodPost)
+	h.Handle("/service-instances/{id}/schedule-build",
+		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceScheduleBuild))).Methods(http.MethodPost)
+	h.Handle("/service-instances/{id}/scheduled-builds",
+		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceScheduledBuilds))).Methods(http.MethodGet)
+	h.Handle("/service-instance-scheduled-builds/{id}",
+		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceScheduledBuildCancel))).Methods(http.MethodDelete)
 	h.Handle("/service-instances/{id}/targets",
 		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceTargets))).Methods(http.MethodGet)
 	h.Handle("/service-instances/{id}/operations",

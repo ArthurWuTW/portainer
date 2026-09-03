@@ -13,37 +13,38 @@ import (
 var _ dataservices.DataStore = &testDatastore{}
 
 type testDatastore struct {
-	allowList                dataservices.AllowListService
-	customTemplate           dataservices.CustomTemplateService
-	edgeGroup                dataservices.EdgeGroupService
-	edgeJob                  dataservices.EdgeJobService
-	edgeStack                dataservices.EdgeStackService
-	edgeStackStatus          dataservices.EdgeStackStatusService
-	endpoint                 dataservices.EndpointService
-	endpointGroup            dataservices.EndpointGroupService
-	endpointRelation         dataservices.EndpointRelationService
-	helmUserRepository       dataservices.HelmUserRepositoryService
-	registry                 dataservices.RegistryService
-	resourceControl          dataservices.ResourceControlService
-	source                   dataservices.SourceService
-	apiKeyRepositoryService  dataservices.APIKeyRepository
-	role                     dataservices.RoleService
-	serviceInstance          dataservices.ServiceInstanceService
-	serviceInstanceOperation dataservices.ServiceInstanceOperationService
-	sslSettings              dataservices.SSLSettingsService
-	settings                 dataservices.SettingsService
-	snapshot                 dataservices.SnapshotService
-	stack                    dataservices.StackService
-	tag                      dataservices.TagService
-	teamMembership           dataservices.TeamMembershipService
-	team                     dataservices.TeamService
-	tunnelServer             dataservices.TunnelServerService
-	user                     dataservices.UserService
-	version                  dataservices.VersionService
-	webhook                  dataservices.WebhookService
-	pendingActionsService    dataservices.PendingActionsService
-	workflow                 dataservices.WorkflowService
-	connection               portainer.Connection
+	allowList                     dataservices.AllowListService
+	customTemplate                dataservices.CustomTemplateService
+	edgeGroup                     dataservices.EdgeGroupService
+	edgeJob                       dataservices.EdgeJobService
+	edgeStack                     dataservices.EdgeStackService
+	edgeStackStatus               dataservices.EdgeStackStatusService
+	endpoint                      dataservices.EndpointService
+	endpointGroup                 dataservices.EndpointGroupService
+	endpointRelation              dataservices.EndpointRelationService
+	helmUserRepository            dataservices.HelmUserRepositoryService
+	registry                      dataservices.RegistryService
+	resourceControl               dataservices.ResourceControlService
+	source                        dataservices.SourceService
+	apiKeyRepositoryService       dataservices.APIKeyRepository
+	role                          dataservices.RoleService
+	serviceInstance               dataservices.ServiceInstanceService
+	serviceInstanceOperation      dataservices.ServiceInstanceOperationService
+	serviceInstanceScheduledBuild dataservices.ServiceInstanceScheduledBuildService
+	sslSettings                   dataservices.SSLSettingsService
+	settings                      dataservices.SettingsService
+	snapshot                      dataservices.SnapshotService
+	stack                         dataservices.StackService
+	tag                           dataservices.TagService
+	teamMembership                dataservices.TeamMembershipService
+	team                          dataservices.TeamService
+	tunnelServer                  dataservices.TunnelServerService
+	user                          dataservices.UserService
+	version                       dataservices.VersionService
+	webhook                       dataservices.WebhookService
+	pendingActionsService         dataservices.PendingActionsService
+	workflow                      dataservices.WorkflowService
+	connection                    portainer.Connection
 }
 
 func (d *testDatastore) Backup(path string) (string, error)                  { return "", nil }
@@ -85,6 +86,9 @@ func (d *testDatastore) ServiceInstance() dataservices.ServiceInstanceService {
 }
 func (d *testDatastore) ServiceInstanceOperation() dataservices.ServiceInstanceOperationService {
 	return d.serviceInstanceOperation
+}
+func (d *testDatastore) ServiceInstanceScheduledBuild() dataservices.ServiceInstanceScheduledBuildService {
+	return d.serviceInstanceScheduledBuild
 }
 func (d *testDatastore) APIKeyRepository() dataservices.APIKeyRepository {
 	return d.apiKeyRepositoryService

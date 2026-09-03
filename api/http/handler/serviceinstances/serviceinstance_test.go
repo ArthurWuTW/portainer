@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	portainer "github.com/portainer/portainer/api"
 	"github.com/portainer/portainer/api/datastore"
@@ -58,7 +59,7 @@ func newTestHandler(t *testing.T) (*Handler, *datastore.Store, *stubStackDeploye
 	require.NoError(t, err)
 
 	deployer := &stubStackDeployer{}
-	svc := serviceinstance.NewService(store, fileService, deployer)
+	svc := serviceinstance.NewService(store, fileService, deployer, nil)
 
 	h := NewHandler(testhelpers.NewTestRequestBouncer())
 	h.DataStore = store
@@ -388,4 +389,107 @@ func TestServiceInstanceOperationInspect(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &got)
 	require.NoError(t, err)
 	assert.Equal(t, op.ID, got.ID)
+}
+
+func TestServiceInstanceScheduleBuild(t *testing.T) {
+	h, store, _ := newTestHandler(t)
+
+	instance := &portainer.ServiceInstance{
+		Name:           "schedule-test",
+		TargetType:     portainer.ServiceInstanceTargetEnvironments,
+		EnvironmentIDs: []portainer.EndpointID{1},
+		ComposeFile:    "services:\n  web:\n    image: nginx:latest",
+	}
+	require.NoError(t, store.ServiceInstance().Create(instance))
+
+	payload := map[string]any{
+		"ComposeFile": "services:\n  web:\n    image: nginx:latest",
+		"DeployAt":    time.Now().Add(time.Hour).Unix(),
+	}
+	b, _ := json.Marshal(payload)
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, newRequestWithSecurityContext(http.MethodPost, fmt.Sprintf("/service-instances/%d/schedule-build", instance.ID), bytes.NewReader(b)))
+
+	require.Equal(t, http.StatusAccepted, w.Code)
+
+	var build portainer.ServiceInstanceScheduledBuild
+	err := json.Unmarshal(w.Body.Bytes(), &build)
+	require.NoError(t, err)
+	assert.Equal(t, instance.ID, build.ServiceInstanceID)
+	assert.NotZero(t, build.ID)
+
+	_, err = store.ServiceInstanceScheduledBuild().Read(build.ID)
+	require.NoError(t, err)
+}
+
+func TestServiceInstanceScheduleBuild_InvalidPayload(t *testing.T) {
+	h, store, _ := newTestHandler(t)
+
+	instance := &portainer.ServiceInstance{
+		Name:       "schedule-invalid",
+		TargetType: portainer.ServiceInstanceTargetEnvironments,
+	}
+	require.NoError(t, store.ServiceInstance().Create(instance))
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, newRequestWithSecurityContext(http.MethodPost, fmt.Sprintf("/service-instances/%d/schedule-build", instance.ID), bytes.NewReader([]byte(`{"ComposeFile": ""}`))))
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestServiceInstanceScheduledBuilds(t *testing.T) {
+	h, store, _ := newTestHandler(t)
+
+	instance := &portainer.ServiceInstance{
+		Name:       "scheduled-builds-test",
+		TargetType: portainer.ServiceInstanceTargetEnvironments,
+	}
+	require.NoError(t, store.ServiceInstance().Create(instance))
+
+	build := &portainer.ServiceInstanceScheduledBuild{
+		ServiceInstanceID: instance.ID,
+		ComposeFile:       "services:\n  web:\n    image: nginx:latest",
+		DeployAt:          time.Now().Add(time.Hour).Unix(),
+		Status:            portainer.ServiceInstanceScheduledBuildStatusPending,
+	}
+	require.NoError(t, store.ServiceInstanceScheduledBuild().Create(build))
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, newRequestWithSecurityContext(http.MethodGet, fmt.Sprintf("/service-instances/%d/scheduled-builds", instance.ID), nil))
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var builds []portainer.ServiceInstanceScheduledBuild
+	err := json.Unmarshal(w.Body.Bytes(), &builds)
+	require.NoError(t, err)
+	require.Len(t, builds, 1)
+	assert.Equal(t, build.ID, builds[0].ID)
+}
+
+func TestServiceInstanceScheduledBuildCancel(t *testing.T) {
+	h, store, _ := newTestHandler(t)
+
+	instance := &portainer.ServiceInstance{
+		Name:       "cancel-test",
+		TargetType: portainer.ServiceInstanceTargetEnvironments,
+	}
+	require.NoError(t, store.ServiceInstance().Create(instance))
+
+	build := &portainer.ServiceInstanceScheduledBuild{
+		ServiceInstanceID: instance.ID,
+		ComposeFile:       "services:\n  web:\n    image: nginx:latest",
+		DeployAt:          time.Now().Add(time.Hour).Unix(),
+		Status:            portainer.ServiceInstanceScheduledBuildStatusPending,
+	}
+	require.NoError(t, store.ServiceInstanceScheduledBuild().Create(build))
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, newRequestWithSecurityContext(http.MethodDelete, fmt.Sprintf("/service-instance-scheduled-builds/%d", build.ID), nil))
+
+	require.Equal(t, http.StatusNoContent, w.Code)
+
+	updated, err := store.ServiceInstanceScheduledBuild().Read(build.ID)
+	require.NoError(t, err)
+	assert.Equal(t, portainer.ServiceInstanceScheduledBuildStatusCancelled, updated.Status)
 }

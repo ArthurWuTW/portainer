@@ -14,6 +14,7 @@ import { OverviewTab } from './OverviewTab';
 import { TargetsTab } from './TargetsTab';
 import { MonitorTab } from './MonitorTab';
 import { ComposeTab } from './ComposeTab';
+import { DeployTab } from './DeployTab';
 import { OperationsTab } from './OperationsTab';
 
 const breadcrumbs = [
@@ -21,7 +22,13 @@ const breadcrumbs = [
   'Service Instance',
 ];
 
-type TabId = 'overview' | 'targets' | 'monitor' | 'compose' | 'operations';
+type TabId =
+  | 'overview'
+  | 'targets'
+  | 'monitor'
+  | 'compose'
+  | 'deploy'
+  | 'operations';
 
 export function ItemView() {
   const id = useIdParam('id');
@@ -74,6 +81,7 @@ export function ItemView() {
             { id: 'targets', label: 'Targets' },
             { id: 'monitor', label: 'Monitor' },
             { id: 'compose', label: 'Compose' },
+            { id: 'deploy', label: 'Deploy' },
             { id: 'operations', label: 'Operations' },
           ]}
           selectedId={selectedTab}
@@ -83,6 +91,7 @@ export function ItemView() {
         {selectedTab === 'targets' && <TargetsTab instance={instance} />}
         {selectedTab === 'monitor' && <MonitorTab instance={instance} />}
         {selectedTab === 'compose' && <ComposeTab instance={instance} />}
+        {selectedTab === 'deploy' && <DeployTab instance={instance} />}
         {selectedTab === 'operations' && <OperationsTab instance={instance} />}
       </div>
     </>

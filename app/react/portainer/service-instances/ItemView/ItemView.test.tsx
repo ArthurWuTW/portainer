@@ -13,6 +13,7 @@ import { UserViewModel } from '@/portainer/models/user';
 import {
   mockServiceInstance,
   mockServiceInstanceOperation,
+  mockServiceInstanceScheduledBuild,
   mockServiceInstanceTargets,
 } from '../test-utils/mocks';
 import {
@@ -71,8 +72,25 @@ describe('Service Instance ItemView', () => {
     expect(screen.getByRole('button', { name: 'Targets' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Monitor' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Compose' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Deploy' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Operations' })
+    ).toBeInTheDocument();
+  });
+
+  it('renders the deploy tab with compose editor and buttons', async () => {
+    renderComponent();
+
+    await screen.findByRole('heading', { name: 'production-web' });
+    await userEvent.click(screen.getByRole('button', { name: 'Deploy' }));
+
+    expect(
+      document.querySelector('[data-cy="service-instance-deploy-now-button"]')
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector(
+        '[data-cy="service-instance-schedule-build-button"]'
+      )
     ).toBeInTheDocument();
   });
 
@@ -129,7 +147,7 @@ describe('Service Instance ItemView', () => {
       await screen.findByRole('heading', { name: 'Monitor' })
     ).toBeInTheDocument();
     expect(
-      await screen.findByText('Auto-refreshes every 0.5 seconds')
+      await screen.findByText('Auto-refreshes every 3 seconds')
     ).toBeInTheDocument();
     expect(screen.getByText('prod-a')).toBeInTheDocument();
     expect(screen.getByText('prod-b')).toBeInTheDocument();
@@ -145,7 +163,7 @@ describe('Service Instance ItemView', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Monitor' }));
 
     expect(
-      await screen.findByText('Auto-refreshes every 0.5 seconds')
+      await screen.findByText('Auto-refreshes every 3 seconds')
     ).toBeInTheDocument();
 
     await userEvent.click(
@@ -193,6 +211,9 @@ function renderComponent(
     ),
     http.get('/api/service-instances/1/operations', () =>
       HttpResponse.json(overrides.operations ?? [mockServiceInstanceOperation])
+    ),
+    http.get('/api/service-instances/1/scheduled-builds', () =>
+      HttpResponse.json([mockServiceInstanceScheduledBuild])
     )
   );
 

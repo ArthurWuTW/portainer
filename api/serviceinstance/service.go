@@ -17,11 +17,16 @@ import (
 	portainer "github.com/portainer/portainer/api"
 	"github.com/portainer/portainer/api/dataservices"
 	dserrors "github.com/portainer/portainer/api/dataservices/errors"
+	dockerclient "github.com/portainer/portainer/api/docker/client"
+	"github.com/portainer/portainer/api/docker/images"
 	"github.com/portainer/portainer/api/filesystem"
 	"github.com/portainer/portainer/api/http/security"
+	"github.com/portainer/portainer/api/logs"
 	"github.com/portainer/portainer/api/stacks/deployments"
 	"github.com/portainer/portainer/api/stacks/stackutils"
 
+	composeloader "github.com/compose-spec/compose-go/v2/loader"
+	composetypes "github.com/compose-spec/compose-go/v2/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -35,6 +40,8 @@ var (
 	// ErrStackOwnershipConflict is returned when a stack with the target name
 	// already exists on an environment but is not managed by this service instance.
 	ErrStackOwnershipConflict = errors.New("a stack with the same name exists and is not managed by this service instance")
+	// ErrInvalidComposeFile is returned when the provided compose file cannot be parsed.
+	ErrInvalidComposeFile = errors.New("invalid compose file")
 )
 
 // ResolvedTargets is the result of resolving a service instance's deployment
@@ -50,18 +57,22 @@ type Service struct {
 	dataStore     dataservices.DataStore
 	fileService   portainer.FileService
 	stackDeployer deployments.StackDeployer
+	clientFactory *dockerclient.ClientFactory
 
-	mu      sync.Mutex
-	running map[portainer.ServiceInstanceID]bool
+	mu              sync.Mutex
+	running         map[portainer.ServiceInstanceID]bool
+	scheduledBuilds map[portainer.ServiceInstanceScheduledBuildID]context.CancelFunc
 }
 
 // NewService creates a new Service.
-func NewService(dataStore dataservices.DataStore, fileService portainer.FileService, stackDeployer deployments.StackDeployer) *Service {
+func NewService(dataStore dataservices.DataStore, fileService portainer.FileService, stackDeployer deployments.StackDeployer, clientFactory *dockerclient.ClientFactory) *Service {
 	return &Service{
-		dataStore:     dataStore,
-		fileService:   fileService,
-		stackDeployer: stackDeployer,
-		running:       make(map[portainer.ServiceInstanceID]bool),
+		dataStore:       dataStore,
+		fileService:     fileService,
+		stackDeployer:   stackDeployer,
+		clientFactory:   clientFactory,
+		running:         make(map[portainer.ServiceInstanceID]bool),
+		scheduledBuilds: make(map[portainer.ServiceInstanceScheduledBuildID]context.CancelFunc),
 	}
 }
 
@@ -228,6 +239,317 @@ func (s *Service) RefreshStatus(instanceID portainer.ServiceInstanceID) (*portai
 	}
 
 	return instance, nil
+}
+
+// ScheduleBuild schedules a build for a service instance: the images referenced
+// by the provided compose file are pulled on all target environments immediately,
+// and the compose file is deployed at the given unix timestamp.
+func (s *Service) ScheduleBuild(ctx context.Context, instanceID portainer.ServiceInstanceID, composeFile string, deployAt int64, securityContext *security.RestrictedRequestContext) (*portainer.ServiceInstanceScheduledBuild, error) {
+	if _, err := parseComposeFile(composeFile); err != nil {
+		return nil, err
+	}
+
+	instance, err := s.dataStore.ServiceInstance().Read(instanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	targets, err := s.ResolveTargets(instance)
+	if err != nil {
+		return nil, err
+	}
+	if len(targets.Endpoints) == 0 {
+		return nil, ErrNoDeploymentTargets
+	}
+
+	results := make([]portainer.ServiceInstanceScheduledBuildTargetResult, 0, len(targets.Endpoints))
+	for _, endpoint := range targets.Endpoints {
+		results = append(results, portainer.ServiceInstanceScheduledBuildTargetResult{
+			EnvironmentID: endpoint.ID,
+			Status:        portainer.ServiceInstanceScheduledBuildTargetStatusPending,
+		})
+	}
+
+	build := &portainer.ServiceInstanceScheduledBuild{
+		ID:                portainer.ServiceInstanceScheduledBuildID(s.dataStore.ServiceInstanceScheduledBuild().GetNextIdentifier()),
+		ServiceInstanceID: instanceID,
+		ComposeFile:       composeFile,
+		DeployAt:          deployAt,
+		Status:            portainer.ServiceInstanceScheduledBuildStatusPending,
+		UserID:            securityContext.UserID,
+		CreatedAt:         time.Now().Unix(),
+		Results:           results,
+	}
+
+	if err := s.dataStore.ServiceInstanceScheduledBuild().Create(build); err != nil {
+		return nil, err
+	}
+
+	runCtx, cancel := context.WithCancel(context.Background())
+	s.mu.Lock()
+	s.scheduledBuilds[build.ID] = cancel
+	s.mu.Unlock()
+
+	go s.runScheduledBuild(runCtx, build, instance, targets.Endpoints, securityContext)
+
+	return build, nil
+}
+
+// CancelScheduledBuild cancels a pending or pulling scheduled build.
+func (s *Service) CancelScheduledBuild(id portainer.ServiceInstanceScheduledBuildID) error {
+	build, err := s.dataStore.ServiceInstanceScheduledBuild().Read(id)
+	if err != nil {
+		return err
+	}
+
+	switch build.Status {
+	case portainer.ServiceInstanceScheduledBuildStatusPending, portainer.ServiceInstanceScheduledBuildStatusPulling:
+	default:
+		return errors.New("only pending or pulling scheduled builds can be cancelled")
+	}
+
+	build.Status = portainer.ServiceInstanceScheduledBuildStatusCancelled
+	now := time.Now().Unix()
+	build.FinishedAt = &now
+	if err := s.dataStore.ServiceInstanceScheduledBuild().Update(id, build); err != nil {
+		return err
+	}
+
+	s.mu.Lock()
+	if cancel, ok := s.scheduledBuilds[build.ID]; ok {
+		cancel()
+	}
+	s.mu.Unlock()
+
+	return nil
+}
+
+// ListScheduledBuilds returns all scheduled builds for the given service instance.
+func (s *Service) ListScheduledBuilds(instanceID portainer.ServiceInstanceID) ([]portainer.ServiceInstanceScheduledBuild, error) {
+	return s.dataStore.ServiceInstanceScheduledBuild().ReadAllByServiceInstanceID(instanceID)
+}
+
+// ReadScheduledBuild returns a scheduled build by ID.
+func (s *Service) ReadScheduledBuild(id portainer.ServiceInstanceScheduledBuildID) (*portainer.ServiceInstanceScheduledBuild, error) {
+	return s.dataStore.ServiceInstanceScheduledBuild().Read(id)
+}
+
+// RecoverScheduledBuilds re-schedules any scheduled build that was pending or
+// pulling when the server was restarted.
+func (s *Service) RecoverScheduledBuilds() {
+	builds, err := s.dataStore.ServiceInstanceScheduledBuild().ReadAll(func(build portainer.ServiceInstanceScheduledBuild) bool {
+		return build.Status == portainer.ServiceInstanceScheduledBuildStatusPending ||
+			build.Status == portainer.ServiceInstanceScheduledBuildStatusPulling ||
+			build.Status == portainer.ServiceInstanceScheduledBuildStatusImageReady
+	})
+	if err != nil {
+		log.Warn().Err(err).Msg("unable to read scheduled builds for recovery")
+		return
+	}
+
+	for _, build := range builds {
+		instance, err := s.dataStore.ServiceInstance().Read(build.ServiceInstanceID)
+		if err != nil {
+			log.Warn().Err(err).Int("build_id", int(build.ID)).Msg("unable to recover scheduled build: service instance not found")
+			continue
+		}
+
+		targets, err := s.ResolveTargets(instance)
+		if err != nil || len(targets.Endpoints) == 0 {
+			build.Status = portainer.ServiceInstanceScheduledBuildStatusFailed
+			now := time.Now().Unix()
+			build.FinishedAt = &now
+			build.Error = "no deployment targets"
+			if err := s.dataStore.ServiceInstanceScheduledBuild().Update(build.ID, &build); err != nil {
+				log.Warn().Err(err).Int("build_id", int(build.ID)).Msg("unable to update failed scheduled build")
+			}
+			continue
+		}
+
+		securityContext := &security.RestrictedRequestContext{
+			UserID:  build.UserID,
+			IsAdmin: true,
+		}
+
+		runCtx, cancel := context.WithCancel(context.Background())
+		s.mu.Lock()
+		s.scheduledBuilds[build.ID] = cancel
+		s.mu.Unlock()
+
+		go s.runScheduledBuild(runCtx, &build, instance, targets.Endpoints, securityContext)
+	}
+}
+
+func (s *Service) runScheduledBuild(ctx context.Context, build *portainer.ServiceInstanceScheduledBuild, instance *portainer.ServiceInstance, endpoints []portainer.Endpoint, securityContext *security.RestrictedRequestContext) {
+	defer s.removeScheduledBuildCancel(build.ID)
+
+	build.Status = portainer.ServiceInstanceScheduledBuildStatusPulling
+	s.persistScheduledBuild(build)
+
+	imageNames, err := extractComposeImages(build.ComposeFile)
+	if err != nil {
+		s.failScheduledBuild(build, err)
+		return
+	}
+
+	failed := false
+	for i, endpoint := range endpoints {
+		if ctx.Err() != nil {
+			return
+		}
+		if failed {
+			build.Results[i].Status = portainer.ServiceInstanceScheduledBuildTargetStatusSkipped
+			s.persistScheduledBuild(build)
+			continue
+		}
+
+		build.Results[i].Status = portainer.ServiceInstanceScheduledBuildTargetStatusPulling
+		s.persistScheduledBuild(build)
+
+		if err := s.pullImagesOnEndpoint(ctx, &endpoint, imageNames); err != nil {
+			build.Results[i].Status = portainer.ServiceInstanceScheduledBuildTargetStatusFailed
+			build.Results[i].Error = err.Error()
+			failed = true
+		} else {
+			build.Results[i].Status = portainer.ServiceInstanceScheduledBuildTargetStatusImageReady
+		}
+		s.persistScheduledBuild(build)
+	}
+
+	if failed {
+		s.failScheduledBuild(build, errors.New("image pull failed"))
+		return
+	}
+
+	build.Status = portainer.ServiceInstanceScheduledBuildStatusImageReady
+	s.persistScheduledBuild(build)
+
+	if err := s.waitForDeployTime(ctx, build.DeployAt); err != nil {
+		return
+	}
+
+	instance.ComposeFile = build.ComposeFile
+	if err := s.dataStore.ServiceInstance().Update(instance.ID, instance); err != nil {
+		s.failScheduledBuild(build, err)
+		return
+	}
+
+	_, err = s.ExecuteOperation(ctx, instance.ID, portainer.ServiceInstanceOperationDeploy, securityContext)
+	if err != nil {
+		s.failScheduledBuild(build, err)
+		return
+	}
+
+	for i := range build.Results {
+		build.Results[i].Status = portainer.ServiceInstanceScheduledBuildTargetStatusDeployed
+	}
+	build.Status = portainer.ServiceInstanceScheduledBuildStatusDeployed
+	now := time.Now().Unix()
+	build.FinishedAt = &now
+	s.persistScheduledBuild(build)
+}
+
+func (s *Service) removeScheduledBuildCancel(id portainer.ServiceInstanceScheduledBuildID) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.scheduledBuilds, id)
+}
+
+func (s *Service) persistScheduledBuild(build *portainer.ServiceInstanceScheduledBuild) {
+	if err := s.dataStore.ServiceInstanceScheduledBuild().Update(build.ID, build); err != nil {
+		log.Warn().Err(err).Int("build_id", int(build.ID)).Msg("unable to persist service instance scheduled build")
+	}
+}
+
+func (s *Service) failScheduledBuild(build *portainer.ServiceInstanceScheduledBuild, err error) {
+	build.Status = portainer.ServiceInstanceScheduledBuildStatusFailed
+	build.Error = err.Error()
+	now := time.Now().Unix()
+	build.FinishedAt = &now
+	for i := range build.Results {
+		switch build.Results[i].Status {
+		case portainer.ServiceInstanceScheduledBuildTargetStatusPending,
+			portainer.ServiceInstanceScheduledBuildTargetStatusPulling:
+			build.Results[i].Status = portainer.ServiceInstanceScheduledBuildTargetStatusSkipped
+		}
+	}
+	s.persistScheduledBuild(build)
+}
+
+func (s *Service) pullImagesOnEndpoint(ctx context.Context, endpoint *portainer.Endpoint, imageNames []string) error {
+	if s.clientFactory == nil {
+		return errors.New("docker client factory is not available")
+	}
+
+	cli, err := s.clientFactory.CreateClient(endpoint, "", nil)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create docker client for environment %d", int(endpoint.ID))
+	}
+	defer logs.CloseAndLogErr(cli)
+
+	puller := images.NewPuller(cli, images.NewRegistryClient(s.dataStore), s.dataStore)
+
+	for _, name := range imageNames {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		img, err := images.ParseImage(images.ParseImageOptions{Name: name})
+		if err != nil {
+			return errors.Wrapf(err, "unable to parse image %q", name)
+		}
+		if err := puller.Pull(ctx, img); err != nil {
+			return errors.Wrapf(err, "unable to pull image %q on environment %d", name, int(endpoint.ID))
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) waitForDeployTime(ctx context.Context, deployAt int64) error {
+	wait := time.Until(time.Unix(deployAt, 0))
+	if wait <= 0 {
+		return nil
+	}
+
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+func parseComposeFile(composeFile string) (*composetypes.Project, error) {
+	composeConfig, err := composeloader.LoadWithContext(context.Background(), composetypes.ConfigDetails{
+		ConfigFiles: []composetypes.ConfigFile{{Content: []byte(composeFile)}},
+	}, composeloader.WithSkipValidation)
+	if err != nil {
+		return nil, errors.Wrap(ErrInvalidComposeFile, err.Error())
+	}
+
+	return composeConfig, nil
+}
+
+func extractComposeImages(composeFile string) ([]string, error) {
+	composeConfig, err := parseComposeFile(composeFile)
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[string]bool)
+	imageNames := make([]string, 0, len(composeConfig.Services))
+	for _, service := range composeConfig.Services {
+		if service.Image == "" || seen[service.Image] {
+			continue
+		}
+		seen[service.Image] = true
+		imageNames = append(imageNames, service.Image)
+	}
+
+	return imageNames, nil
 }
 
 // HasRunningOperation reports whether a lifecycle operation is currently

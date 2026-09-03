@@ -127,6 +127,68 @@ export interface ServiceInstanceTarget {
   Missing: boolean;
 }
 
+export type ServiceInstanceScheduledBuildId = number;
+
+export type ServiceInstanceScheduledBuildStatus =
+  | typeof ServiceInstanceScheduledBuildStatuses.PENDING
+  | typeof ServiceInstanceScheduledBuildStatuses.PULLING
+  | typeof ServiceInstanceScheduledBuildStatuses.DEPLOYED
+  | typeof ServiceInstanceScheduledBuildStatuses.FAILED
+  | typeof ServiceInstanceScheduledBuildStatuses.CANCELLED
+  | typeof ServiceInstanceScheduledBuildStatuses.IMAGE_READY;
+
+export const ServiceInstanceScheduledBuildStatuses = {
+  PENDING: 1,
+  PULLING: 2,
+  DEPLOYED: 3,
+  FAILED: 4,
+  CANCELLED: 5,
+  IMAGE_READY: 6,
+} as const;
+
+export type ServiceInstanceScheduledBuildTargetStatus =
+  | typeof ServiceInstanceScheduledBuildTargetStatuses.PENDING
+  | typeof ServiceInstanceScheduledBuildTargetStatuses.PULLING
+  | typeof ServiceInstanceScheduledBuildTargetStatuses.IMAGE_READY
+  | typeof ServiceInstanceScheduledBuildTargetStatuses.DEPLOYED
+  | typeof ServiceInstanceScheduledBuildTargetStatuses.FAILED
+  | typeof ServiceInstanceScheduledBuildTargetStatuses.SKIPPED
+  | typeof ServiceInstanceScheduledBuildTargetStatuses.CANCELLED;
+
+export const ServiceInstanceScheduledBuildTargetStatuses = {
+  PENDING: 1,
+  PULLING: 2,
+  IMAGE_READY: 3,
+  DEPLOYED: 4,
+  FAILED: 5,
+  SKIPPED: 6,
+  CANCELLED: 7,
+} as const;
+
+export interface ServiceInstanceScheduledBuildTargetResult {
+  EnvironmentId: number;
+  Status: ServiceInstanceScheduledBuildTargetStatus;
+  Error?: string;
+}
+
+export interface ServiceInstanceScheduledBuild {
+  Id: ServiceInstanceScheduledBuildId;
+  ServiceInstanceId: ServiceInstanceId;
+  ComposeFile: string;
+  DeployAt: number;
+  Status: ServiceInstanceScheduledBuildStatus;
+  UserId: number;
+  CreatedAt: number;
+  FinishedAt?: number;
+  Error?: string;
+  Results: ServiceInstanceScheduledBuildTargetResult[];
+}
+
+export interface ScheduleServiceInstanceBuildPayload {
+  ComposeFile: string;
+  DeployAt: number;
+}
+
 export interface CreateServiceInstancePayload {
   Name: string;
   Description: string;

@@ -3,6 +3,9 @@ import {
   ServiceInstanceOperation,
   ServiceInstanceOperationStatuses,
   ServiceInstanceOperationTypes,
+  ServiceInstanceScheduledBuild,
+  ServiceInstanceScheduledBuildStatuses,
+  ServiceInstanceScheduledBuildTargetStatuses,
   ServiceInstanceTarget,
   ServiceInstanceTargetStatuses,
   ServiceInstanceTargetTypes,
@@ -42,6 +45,23 @@ export const mockServiceInstanceOperation: ServiceInstanceOperation = {
     },
   ],
 };
+
+export const mockServiceInstanceScheduledBuild: ServiceInstanceScheduledBuild =
+  {
+    Id: 1,
+    ServiceInstanceId: 1,
+    ComposeFile: 'services:\n  web:\n    image: nginx:latest',
+    DeployAt: 1700003600,
+    Status: ServiceInstanceScheduledBuildStatuses.PENDING,
+    UserId: 1,
+    CreatedAt: 1700000000,
+    Results: [
+      {
+        EnvironmentId: 1,
+        Status: ServiceInstanceScheduledBuildTargetStatuses.PENDING,
+      },
+    ],
+  };
 
 export const mockServiceInstanceTargets: ServiceInstanceTarget[] = [
   {

@@ -47,7 +47,7 @@ func newTestService(t *testing.T) (*Service, *datastore.Store) {
 	require.NoError(t, err)
 
 	deployer := &stubStackDeployer{}
-	svc := NewService(store, fileService, deployer)
+	svc := NewService(store, fileService, deployer, nil)
 	return svc, store
 }
 
@@ -233,7 +233,7 @@ func TestExecuteOperation_ConcurrencyGuard(t *testing.T) {
 		},
 	}
 
-	svc := NewService(store, fileService, deployer)
+	svc := NewService(store, fileService, deployer, nil)
 
 	group := &portainer.EndpointGroup{
 		Name:        "guard-group",
@@ -283,7 +283,7 @@ func TestExecuteOperation_PartialFailure(t *testing.T) {
 		},
 	}
 
-	svc := NewService(store, fileService, deployer)
+	svc := NewService(store, fileService, deployer, nil)
 
 	group := &portainer.EndpointGroup{
 		Name:        "partial-group",
@@ -346,5 +346,96 @@ func TestDelete(t *testing.T) {
 
 	// Verify operation is gone
 	_, err = store.ServiceInstanceOperation().Read(op.ID)
+	assert.Error(t, err)
+}
+
+func TestScheduleBuild_InvalidCompose(t *testing.T) {
+	svc, store := newTestService(t)
+	createTestUser(t, store)
+
+	instance := &portainer.ServiceInstance{
+		Name:           "schedule-invalid",
+		TargetType:     portainer.ServiceInstanceTargetEnvironments,
+		EnvironmentIDs: []portainer.EndpointID{1},
+	}
+	require.NoError(t, svc.Create(instance))
+	createTestEndpoints(t, store, 1, 1)
+
+	_, err := svc.ScheduleBuild(context.Background(), instance.ID, "not a valid compose", time.Now().Add(time.Hour).Unix(), adminSecurityContext())
+	assert.ErrorIs(t, err, ErrInvalidComposeFile)
+}
+
+func TestScheduleBuild_NoTargets(t *testing.T) {
+	svc, store := newTestService(t)
+	createTestUser(t, store)
+
+	group := &portainer.EndpointGroup{
+		Name:        "empty-schedule-group",
+		Description: "Empty group",
+	}
+	require.NoError(t, store.EndpointGroup().Create(group))
+
+	instance := &portainer.ServiceInstance{
+		Name:       "schedule-no-targets",
+		TargetType: portainer.ServiceInstanceTargetGroup,
+		GroupID:    group.ID,
+	}
+	require.NoError(t, svc.Create(instance))
+
+	_, err := svc.ScheduleBuild(context.Background(), instance.ID, "services:\n  web:\n    image: nginx:latest", time.Now().Add(time.Hour).Unix(), adminSecurityContext())
+	assert.ErrorIs(t, err, ErrNoDeploymentTargets)
+}
+
+func TestScheduleBuild_CreatesPendingBuild(t *testing.T) {
+	svc, store := newTestService(t)
+	createTestUser(t, store)
+	createTestEndpoints(t, store, 1, 1)
+
+	instance := &portainer.ServiceInstance{
+		Name:           "schedule-test",
+		TargetType:     portainer.ServiceInstanceTargetEnvironments,
+		EnvironmentIDs: []portainer.EndpointID{1},
+	}
+	require.NoError(t, svc.Create(instance))
+
+	build, err := svc.ScheduleBuild(context.Background(), instance.ID, "services:\n  web:\n    image: nginx:latest", time.Now().Add(time.Hour).Unix(), adminSecurityContext())
+	require.NoError(t, err)
+	assert.NotZero(t, build.ID)
+	assert.Equal(t, instance.ID, build.ServiceInstanceID)
+
+	stored, err := store.ServiceInstanceScheduledBuild().Read(build.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "services:\n  web:\n    image: nginx:latest", stored.ComposeFile)
+	require.Len(t, stored.Results, 1)
+	assert.Equal(t, portainer.EndpointID(1), stored.Results[0].EnvironmentID)
+}
+
+func TestCancelScheduledBuild(t *testing.T) {
+	svc, store := newTestService(t)
+	createTestUser(t, store)
+
+	instance := &portainer.ServiceInstance{
+		Name:       "cancel-test",
+		TargetType: portainer.ServiceInstanceTargetEnvironments,
+	}
+	require.NoError(t, svc.Create(instance))
+
+	build := &portainer.ServiceInstanceScheduledBuild{
+		ServiceInstanceID: instance.ID,
+		ComposeFile:       "services:\n  web:\n    image: nginx:latest",
+		DeployAt:          time.Now().Add(time.Hour).Unix(),
+		Status:            portainer.ServiceInstanceScheduledBuildStatusPending,
+	}
+	require.NoError(t, store.ServiceInstanceScheduledBuild().Create(build))
+
+	require.NoError(t, svc.CancelScheduledBuild(build.ID))
+
+	updated, err := store.ServiceInstanceScheduledBuild().Read(build.ID)
+	require.NoError(t, err)
+	assert.Equal(t, portainer.ServiceInstanceScheduledBuildStatusCancelled, updated.Status)
+	require.NotNil(t, updated.FinishedAt)
+
+	// Cancelling a cancelled build should fail
+	err = svc.CancelScheduledBuild(build.ID)
 	assert.Error(t, err)
 }

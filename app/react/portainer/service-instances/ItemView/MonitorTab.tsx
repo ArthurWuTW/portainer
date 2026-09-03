@@ -8,7 +8,7 @@ import { useServiceInstanceTargets } from '../queries/useServiceInstanceTargets'
 
 import { TargetsTable } from './TargetsTable';
 
-const MONITOR_REFRESH_INTERVAL_MS = 500;
+const MONITOR_REFRESH_INTERVAL_MS = 3000;
 
 interface Props {
   instance: ServiceInstance;

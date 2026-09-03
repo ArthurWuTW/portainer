@@ -4,8 +4,10 @@ import {
   ServiceInstance,
   ServiceInstanceOperation,
   ServiceInstanceTarget,
+  ServiceInstanceScheduledBuild,
   CreateServiceInstancePayload,
   UpdateServiceInstancePayload,
+  ScheduleServiceInstanceBuildPayload,
 } from './types';
 
 const baseUrl = '/service-instances';
@@ -163,5 +165,43 @@ export async function refreshServiceInstance(
     return data;
   } catch (e) {
     throw parseAxiosError(e, 'Unable to refresh service instance');
+  }
+}
+
+export async function scheduleServiceInstanceBuild(
+  id: number,
+  payload: ScheduleServiceInstanceBuildPayload
+): Promise<ServiceInstanceScheduledBuild> {
+  try {
+    const { data } = await axios.post<ServiceInstanceScheduledBuild>(
+      `${baseUrl}/${id}/schedule-build`,
+      payload
+    );
+    return data;
+  } catch (e) {
+    throw parseAxiosError(e, 'Unable to schedule build');
+  }
+}
+
+export async function getServiceInstanceScheduledBuilds(
+  id: number
+): Promise<ServiceInstanceScheduledBuild[]> {
+  try {
+    const { data } = await axios.get<ServiceInstanceScheduledBuild[]>(
+      `${baseUrl}/${id}/scheduled-builds`
+    );
+    return data;
+  } catch (e) {
+    throw parseAxiosError(e, 'Unable to retrieve scheduled builds');
+  }
+}
+
+export async function cancelServiceInstanceScheduledBuild(
+  id: number
+): Promise<void> {
+  try {
+    await axios.delete(`/service-instance-scheduled-builds/${id}`);
+  } catch (e) {
+    throw parseAxiosError(e, 'Unable to cancel scheduled build');
   }
 }

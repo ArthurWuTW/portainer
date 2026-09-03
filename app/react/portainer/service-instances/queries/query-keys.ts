@@ -1,4 +1,8 @@
-import { ServiceInstanceId, ServiceInstanceOperationId } from '../types';
+import {
+  ServiceInstanceId,
+  ServiceInstanceOperationId,
+  ServiceInstanceScheduledBuildId,
+} from '../types';
 
 export const serviceInstanceQueryKeys = {
   base: () => ['service-instances'] as const,
@@ -11,4 +15,8 @@ export const serviceInstanceQueryKeys = {
     [...serviceInstanceQueryKeys.base(), id, 'operations'] as const,
   operation: (id: ServiceInstanceOperationId) =>
     [...serviceInstanceQueryKeys.base(), 'operations', id] as const,
+  scheduledBuilds: (id: ServiceInstanceId) =>
+    [...serviceInstanceQueryKeys.base(), id, 'scheduled-builds'] as const,
+  scheduledBuild: (id: ServiceInstanceScheduledBuildId) =>
+    [...serviceInstanceQueryKeys.base(), 'scheduled-builds', id] as const,
 };
