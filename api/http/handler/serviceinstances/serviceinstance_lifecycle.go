@@ -87,6 +87,25 @@ func (handler *Handler) serviceInstanceRedeploy(w http.ResponseWriter, r *http.R
 	return handler.startOperation(w, r, portainer.ServiceInstanceOperationRedeploy)
 }
 
+// @id ServiceInstanceRestart
+// @summary Restart a service instance
+// @description Starts an asynchronous restart operation against all target environments.
+// @description **Access policy**: authenticated
+// @tags service_instances
+// @security ApiKeyAuth
+// @security jwt
+// @param id path int true "Service instance identifier"
+// @success 202 {object} portainer.ServiceInstanceOperation "Operation started"
+// @failure 400 "Invalid request"
+// @failure 403 "Permission denied"
+// @failure 404 "Service instance not found"
+// @failure 409 "Operation already in progress"
+// @failure 500 "Server error"
+// @router /service-instances/{id}/restart [post]
+func (handler *Handler) serviceInstanceRestart(w http.ResponseWriter, r *http.Request) *httperror.HandlerError {
+	return handler.startOperation(w, r, portainer.ServiceInstanceOperationRestart)
+}
+
 // startOperation is the shared implementation for the async lifecycle
 // endpoints (deploy, start, stop, redeploy).
 func (handler *Handler) startOperation(w http.ResponseWriter, r *http.Request, operationType portainer.ServiceInstanceOperationType) *httperror.HandlerError {
@@ -123,7 +142,7 @@ func (handler *Handler) startOperation(w http.ResponseWriter, r *http.Request, o
 		}
 	}
 
-	operation, err := handler.Service.ExecuteOperation(r.Context(), instance.ID, operationType, securityContext)
+	operation, err := handler.Service.ExecuteOperation(r.Context(), instance.ID, operationType, securityContext, false)
 	if err != nil {
 		switch err {
 		case serviceinstance.ErrOperationInProgress:

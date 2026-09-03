@@ -1,15 +1,10 @@
-import { Boxes, Play, Square } from 'lucide-react';
+import { Boxes } from 'lucide-react';
 
 import { Badge } from '@@/Badge';
-import { Button } from '@@/buttons';
 import { Icon } from '@@/Icon';
 import { ResourceDetailHeader } from '@@/ResourceDetailHeader/ResourceDetailHeader';
 
 import { ServiceInstance, ServiceInstanceStatuses } from '../types';
-import {
-  useStartServiceInstance,
-  useStopServiceInstance,
-} from '../queries/useServiceInstanceLifecycle';
 
 const statusBadgeType: Record<
   number,
@@ -37,11 +32,6 @@ interface Props {
 }
 
 export function ServiceInstanceResourceHeader({ instance }: Props) {
-  const startMutation = useStartServiceInstance();
-  const stopMutation = useStopServiceInstance();
-
-  const isBusy = startMutation.isLoading || stopMutation.isLoading;
-
   return (
     <ResourceDetailHeader
       icon={<Icon icon={Boxes} size="xl" />}
@@ -52,28 +42,6 @@ export function ServiceInstanceResourceHeader({ instance }: Props) {
         </Badge>
       }
       description={instance.Description || undefined}
-      actionBar={
-        <div className="flex items-center gap-2">
-          <Button
-            color="secondary"
-            icon={Play}
-            disabled={isBusy}
-            data-cy="service-instance-start-button"
-            onClick={() => startMutation.mutate(instance.Id)}
-          >
-            Start
-          </Button>
-          <Button
-            color="secondary"
-            icon={Square}
-            disabled={isBusy}
-            data-cy="service-instance-stop-button"
-            onClick={() => stopMutation.mutate(instance.Id)}
-          >
-            Stop
-          </Button>
-        </div>
-      }
     />
   );
 }

@@ -213,7 +213,7 @@ func TestExecuteOperation_NoTargets(t *testing.T) {
 	}
 	require.NoError(t, svc.Create(instance))
 
-	_, err := svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext())
+	_, err := svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext(), false)
 	assert.ErrorIs(t, err, ErrNoDeploymentTargets)
 }
 
@@ -250,11 +250,11 @@ func TestExecuteOperation_ConcurrencyGuard(t *testing.T) {
 	require.NoError(t, svc.Create(instance))
 
 	// Start first operation (will block in the deployer)
-	_, err = svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext())
+	_, err = svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext(), false)
 	require.NoError(t, err)
 
 	// Second operation should be rejected
-	_, err = svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext())
+	_, err = svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext(), false)
 	assert.ErrorIs(t, err, ErrOperationInProgress)
 
 	// Release the first operation
@@ -262,7 +262,7 @@ func TestExecuteOperation_ConcurrencyGuard(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Now a new operation should be allowed
-	_, err = svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext())
+	_, err = svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext(), false)
 	assert.NoError(t, err)
 }
 
@@ -299,7 +299,7 @@ func TestExecuteOperation_PartialFailure(t *testing.T) {
 	}
 	require.NoError(t, svc.Create(instance))
 
-	operation, err := svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext())
+	operation, err := svc.ExecuteOperation(context.Background(), instance.ID, portainer.ServiceInstanceOperationDeploy, adminSecurityContext(), false)
 	require.NoError(t, err)
 
 	// Wait for the operation to complete

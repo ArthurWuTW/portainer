@@ -142,6 +142,19 @@ export async function stopServiceInstance(
   }
 }
 
+export async function restartServiceInstance(
+  id: number
+): Promise<ServiceInstanceOperation> {
+  try {
+    const { data } = await axios.post<ServiceInstanceOperation>(
+      `${baseUrl}/${id}/restart`
+    );
+    return data;
+  } catch (e) {
+    throw parseAxiosError(e, 'Unable to restart service instance');
+  }
+}
+
 export async function redeployServiceInstance(
   id: number
 ): Promise<ServiceInstanceOperation> {

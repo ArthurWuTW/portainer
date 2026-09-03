@@ -20,6 +20,7 @@ const operationTypeLabel: Record<number, string> = {
   [ServiceInstanceOperationTypes.STOP]: 'Stop',
   [ServiceInstanceOperationTypes.REDEPLOY]: 'Redeploy',
   [ServiceInstanceOperationTypes.REFRESH]: 'Refresh',
+  [ServiceInstanceOperationTypes.RESTART]: 'Restart',
 };
 
 const operationStatusBadge: Record<

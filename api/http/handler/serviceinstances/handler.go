@@ -44,6 +44,8 @@ func NewHandler(bouncer security.BouncerService) *Handler {
 		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceStop))).Methods(http.MethodPost)
 	h.Handle("/service-instances/{id}/redeploy",
 		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceRedeploy))).Methods(http.MethodPost)
+	h.Handle("/service-instances/{id}/restart",
+		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceRestart))).Methods(http.MethodPost)
 	h.Handle("/service-instances/{id}/refresh",
 		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.serviceInstanceRefresh))).Methods(http.MethodPost)
 	h.Handle("/service-instances/{id}/schedule-build",

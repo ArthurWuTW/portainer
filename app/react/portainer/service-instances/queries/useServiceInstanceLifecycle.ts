@@ -6,6 +6,7 @@ import {
   deployServiceInstance,
   startServiceInstance,
   stopServiceInstance,
+  restartServiceInstance,
   redeployServiceInstance,
   refreshServiceInstance,
 } from '../service-instance.service';
@@ -48,6 +49,13 @@ export function useStopServiceInstance() {
   return useLifecycleMutation(
     stopServiceInstance,
     'Failed stopping service instance'
+  );
+}
+
+export function useRestartServiceInstance() {
+  return useLifecycleMutation(
+    restartServiceInstance,
+    'Failed restarting service instance'
   );
 }
 

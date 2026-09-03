@@ -434,7 +434,7 @@ func (s *Service) runScheduledBuild(ctx context.Context, build *portainer.Servic
 		return
 	}
 
-	_, err = s.ExecuteOperation(ctx, instance.ID, portainer.ServiceInstanceOperationDeploy, securityContext)
+	_, err = s.ExecuteOperation(ctx, instance.ID, portainer.ServiceInstanceOperationDeploy, securityContext, true)
 	if err != nil {
 		s.failScheduledBuild(build, err)
 		return
@@ -565,9 +565,11 @@ func (s *Service) HasRunningOperation(id portainer.ServiceInstanceID) bool {
 //
 // The operation is executed asynchronously: a record is created and returned
 // immediately, and the per-target execution happens in a background
-// goroutine. Targets are processed sequentially and the operation stops at
-// the first failure (fail-fast); remaining targets are marked as skipped.
-func (s *Service) ExecuteOperation(ctx context.Context, instanceID portainer.ServiceInstanceID, operationType portainer.ServiceInstanceOperationType, securityContext *security.RestrictedRequestContext) (*portainer.ServiceInstanceOperation, error) {
+// goroutine. When parallel is false, targets are processed sequentially and
+// the operation stops at the first failure (fail-fast); remaining targets are
+// marked as skipped. When parallel is true, all targets are processed
+// concurrently and each reports its own success or failure.
+func (s *Service) ExecuteOperation(ctx context.Context, instanceID portainer.ServiceInstanceID, operationType portainer.ServiceInstanceOperationType, securityContext *security.RestrictedRequestContext, parallel bool) (*portainer.ServiceInstanceOperation, error) {
 	s.mu.Lock()
 	if s.running[instanceID] {
 		s.mu.Unlock()
@@ -614,7 +616,7 @@ func (s *Service) ExecuteOperation(ctx context.Context, instanceID portainer.Ser
 		return nil, err
 	}
 
-	go s.runOperation(instance, operation, targets.Endpoints, securityContext)
+	go s.runOperation(instance, operation, targets.Endpoints, securityContext, parallel)
 
 	return operation, nil
 }
@@ -625,13 +627,20 @@ func (s *Service) releaseOperation(instanceID portainer.ServiceInstanceID) {
 	delete(s.running, instanceID)
 }
 
-// runOperation executes the operation against each target sequentially with
-// fail-fast semantics and persists the results as they happen.
-func (s *Service) runOperation(instance *portainer.ServiceInstance, operation *portainer.ServiceInstanceOperation, endpoints []portainer.Endpoint, securityContext *security.RestrictedRequestContext) {
+// runOperation executes the operation against each target and persists the
+// results as they happen. When parallel is false, targets are processed
+// sequentially with fail-fast semantics. When parallel is true, all targets
+// are processed concurrently and each reports its own success or failure.
+func (s *Service) runOperation(instance *portainer.ServiceInstance, operation *portainer.ServiceInstanceOperation, endpoints []portainer.Endpoint, securityContext *security.RestrictedRequestContext, parallel bool) {
 	defer s.releaseOperation(instance.ID)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
+
+	if parallel {
+		s.runOperationParallel(ctx, instance, operation, endpoints, securityContext)
+		return
+	}
 
 	failed := false
 	for i, endpoint := range endpoints {
@@ -654,6 +663,43 @@ func (s *Service) runOperation(instance *portainer.ServiceInstance, operation *p
 
 		s.persistOperation(operation)
 	}
+
+	s.finalizeOperation(instance, operation)
+}
+
+// runOperationParallel executes the operation against all targets
+// concurrently. Each target independently reports success or failure; the
+// shared operation record is guarded by a mutex so results are persisted
+// safely.
+func (s *Service) runOperationParallel(ctx context.Context, instance *portainer.ServiceInstance, operation *portainer.ServiceInstanceOperation, endpoints []portainer.Endpoint, securityContext *security.RestrictedRequestContext) {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	for i, endpoint := range endpoints {
+		wg.Add(1)
+		go func(i int, endpoint portainer.Endpoint) {
+			defer wg.Done()
+
+			mu.Lock()
+			operation.Results[i].Status = portainer.ServiceInstanceTargetStatusRunning
+			s.persistOperation(operation)
+			mu.Unlock()
+
+			err := s.executeOnTarget(ctx, instance, &endpoint, operation.Type, securityContext)
+
+			mu.Lock()
+			if err != nil {
+				operation.Results[i].Status = portainer.ServiceInstanceTargetStatusFailed
+				operation.Results[i].Error = err.Error()
+			} else {
+				operation.Results[i].Status = portainer.ServiceInstanceTargetStatusSuccess
+			}
+			s.persistOperation(operation)
+			mu.Unlock()
+		}(i, endpoint)
+	}
+
+	wg.Wait()
 
 	s.finalizeOperation(instance, operation)
 }
@@ -782,6 +828,15 @@ func (s *Service) executeOnTarget(ctx context.Context, instance *portainer.Servi
 			return err
 		}
 		return s.undeployStack(ctx, stack, endpoint)
+	case portainer.ServiceInstanceOperationRestart:
+		stack, err := s.findStackOnEndpoint(instance, endpoint.ID)
+		if err != nil {
+			return err
+		}
+		if err := s.undeployStack(ctx, stack, endpoint); err != nil {
+			return err
+		}
+		return s.deployStack(ctx, stack, endpoint, securityContext, false)
 	case portainer.ServiceInstanceOperationRefresh:
 		_, err := s.findStackOnEndpoint(instance, endpoint.ID)
 		return err

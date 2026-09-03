@@ -38,7 +38,8 @@ export type ServiceInstanceOperationType =
   | typeof ServiceInstanceOperationTypes.START
   | typeof ServiceInstanceOperationTypes.STOP
   | typeof ServiceInstanceOperationTypes.REDEPLOY
-  | typeof ServiceInstanceOperationTypes.REFRESH;
+  | typeof ServiceInstanceOperationTypes.REFRESH
+  | typeof ServiceInstanceOperationTypes.RESTART;
 
 export const ServiceInstanceOperationTypes = {
   DEPLOY: 1,
@@ -46,6 +47,7 @@ export const ServiceInstanceOperationTypes = {
   STOP: 3,
   REDEPLOY: 4,
   REFRESH: 5,
+  RESTART: 6,
 } as const;
 
 export type ServiceInstanceOperationStatus =

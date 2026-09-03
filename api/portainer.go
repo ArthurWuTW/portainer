@@ -2936,6 +2936,8 @@ const (
 	ServiceInstanceOperationRedeploy
 	// ServiceInstanceOperationRefresh represents a status refresh operation
 	ServiceInstanceOperationRefresh
+	// ServiceInstanceOperationRestart represents a restart operation
+	ServiceInstanceOperationRestart
 )
 
 const (

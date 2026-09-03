@@ -1,10 +1,17 @@
 import { useState } from 'react';
+import { Play, RefreshCw, Square } from 'lucide-react';
 
+import { Button } from '@@/buttons';
 import { Widget } from '@@/Widget';
 import { SwitchField } from '@@/form-components/SwitchField';
 
 import { ServiceInstance } from '../types';
 import { useServiceInstanceTargets } from '../queries/useServiceInstanceTargets';
+import {
+  useRestartServiceInstance,
+  useStartServiceInstance,
+  useStopServiceInstance,
+} from '../queries/useServiceInstanceLifecycle';
 
 import { TargetsTable } from './TargetsTable';
 
@@ -20,6 +27,15 @@ export function MonitorTab({ instance }: Props) {
   const targetsQuery = useServiceInstanceTargets(instance.Id, {
     refetchInterval: autoRefresh ? MONITOR_REFRESH_INTERVAL_MS : false,
   });
+
+  const startMutation = useStartServiceInstance();
+  const stopMutation = useStopServiceInstance();
+  const restartMutation = useRestartServiceInstance();
+
+  const isBusy =
+    startMutation.isLoading ||
+    stopMutation.isLoading ||
+    restartMutation.isLoading;
 
   if (targetsQuery.isLoading) {
     return (
@@ -58,13 +74,42 @@ export function MonitorTab({ instance }: Props) {
             : 'Auto-refresh disabled'
         }
       >
-        <SwitchField
-          label="Auto-refresh"
-          name="monitorAutoRefresh"
-          checked={autoRefresh}
-          onChange={setAutoRefresh}
-          data-cy="service-instance-monitor-auto-refresh"
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            color="secondary"
+            icon={Play}
+            disabled={isBusy}
+            data-cy="service-instance-start-button"
+            onClick={() => startMutation.mutate(instance.Id)}
+          >
+            Start
+          </Button>
+          <Button
+            color="secondary"
+            icon={Square}
+            disabled={isBusy}
+            data-cy="service-instance-stop-button"
+            onClick={() => stopMutation.mutate(instance.Id)}
+          >
+            Stop
+          </Button>
+          <Button
+            color="secondary"
+            icon={RefreshCw}
+            disabled={isBusy}
+            data-cy="service-instance-restart-button"
+            onClick={() => restartMutation.mutate(instance.Id)}
+          >
+            Restart
+          </Button>
+          <SwitchField
+            label="Auto-refresh"
+            name="monitorAutoRefresh"
+            checked={autoRefresh}
+            onChange={setAutoRefresh}
+            data-cy="service-instance-monitor-auto-refresh"
+          />
+        </div>
       </Widget.Title>
       <Widget.Body>
         <TargetsTable targets={targets} dataCy="service-instance-monitor" />

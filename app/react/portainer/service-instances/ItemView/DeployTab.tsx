@@ -112,7 +112,7 @@ export function DeployTab({ instance }: Props) {
   const cancelMutation = useCancelServiceInstanceScheduledBuild();
   const scheduledBuildsQuery = useServiceInstanceScheduledBuilds(instance.Id);
 
-  const builds = scheduledBuildsQuery.data ?? [];
+  const builds = (scheduledBuildsQuery.data ?? []).slice().sort((a, b) => b.Id - a.Id);
   const hasActiveBuild = builds.some(isCancellable);
 
   // When a scheduled build finishes, refresh the instance so the Compose tab
