@@ -26,16 +26,12 @@ const mockHelmRelease: HelmRelease = {
 
 mockLocalizeDate();
 
-vi.mock('@uirouter/react', () => ({
-  useCurrentStateAndParams: () => ({
-    params: {
-      namespace: 'default',
-      name: 'my-release',
-    },
-  }),
+const mockUseCurrentStateAndParams = vi.fn(() => ({
+  params: {
+    namespace: 'default',
+    name: 'my-release',
+  },
 }));
-
-const mockUseCurrentStateAndParams = vi.fn();
 
 vi.mock('@uirouter/react', async (importOriginal: () => Promise<object>) => ({
   ...(await importOriginal()),

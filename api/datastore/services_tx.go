@@ -68,6 +68,14 @@ func (tx *StoreTx) Role() dataservices.RoleService {
 	return tx.store.RoleService.Tx(tx.tx)
 }
 
+func (tx *StoreTx) ServiceInstance() dataservices.ServiceInstanceService {
+	return tx.store.ServiceInstanceService.Tx(tx.tx)
+}
+
+func (tx *StoreTx) ServiceInstanceOperation() dataservices.ServiceInstanceOperationService {
+	return tx.store.ServiceInstanceOperationService.Tx(tx.tx)
+}
+
 func (tx *StoreTx) APIKeyRepository() dataservices.APIKeyRepository { return nil }
 
 func (tx *StoreTx) Settings() dataservices.SettingsService {

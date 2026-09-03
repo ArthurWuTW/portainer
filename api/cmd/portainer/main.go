@@ -640,6 +640,13 @@ func buildServer(flags *portainer.CLIFlags, shutdownCtx context.Context, shutdow
 			Msg("Error recovering stale deploying stacks")
 	}
 
+	if err := dataStore.UpdateTx(func(tx dataservices.DataStoreTx) error {
+		return recoverStaleServiceInstanceOperations(tx)
+	}); err != nil {
+		log.Info().Err(err).
+			Msg("Error recovering stale service instance operations")
+	}
+
 	return &http.Server{
 		AuthorizationService:        authorizationService,
 		ReverseTunnelService:        reverseTunnelService,
@@ -710,6 +717,46 @@ func main() {
 
 		log.Info().Err(err).Msg("HTTP server exited")
 	}
+}
+
+// recoverStaleServiceInstanceOperations marks any service instance operation
+// left in the Running state (e.g. because the server was restarted mid-operation)
+// as failed so the user can retry.
+func recoverStaleServiceInstanceOperations(tx dataservices.DataStoreTx) error {
+	operations, err := tx.ServiceInstanceOperation().ReadAll(func(op portainer.ServiceInstanceOperation) bool {
+		return op.Status == portainer.ServiceInstanceOperationStatusRunning
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, operation := range operations {
+		now := time.Now().Unix()
+		operation.Status = portainer.ServiceInstanceOperationStatusFailed
+		operation.FinishedAt = &now
+
+		for i := range operation.Results {
+			if operation.Results[i].Status == portainer.ServiceInstanceTargetStatusRunning ||
+				operation.Results[i].Status == portainer.ServiceInstanceTargetStatusPending {
+				operation.Results[i].Status = portainer.ServiceInstanceTargetStatusSkipped
+				operation.Results[i].Error = "Operation interrupted by server restart"
+			}
+		}
+
+		if err := tx.ServiceInstanceOperation().Update(operation.ID, &operation); err != nil {
+			log.Warn().Err(err).
+				Int("operation_id", int(operation.ID)).
+				Str("context", "RecoverStaleServiceInstanceOperations").
+				Msg("Unable to recover stale service instance operation")
+			continue
+		}
+		log.Debug().
+			Int("operation_id", int(operation.ID)).
+			Str("context", "RecoverStaleServiceInstanceOperations").
+			Msg("Recovered stale service instance operation to failed state")
+	}
+
+	return nil
 }
 
 // recoverStaleDeployingStacks resets any stack that was left in the Deploying state

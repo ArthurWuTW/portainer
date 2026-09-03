@@ -366,6 +366,50 @@ angular
         },
       };
 
+      var serviceInstances = {
+        name: 'portainer.service-instances',
+        url: '/service-instances?search&sort&order',
+        data: { docs: '/user/service-instances' },
+        views: {
+          'content@': {
+            component: 'serviceInstancesListView',
+          },
+        },
+      };
+
+      var serviceInstanceDetail = {
+        name: 'portainer.service-instances.item',
+        url: '/:id?tab',
+        params: {
+          tab: filterParam('overview'),
+        },
+        views: {
+          'content@': {
+            component: 'serviceInstanceItemView',
+          },
+        },
+      };
+
+      var serviceInstanceCreate = {
+        name: 'portainer.service-instances.new',
+        url: '/new',
+        views: {
+          'content@': {
+            component: 'serviceInstanceCreateView',
+          },
+        },
+      };
+
+      var serviceInstanceEdit = {
+        name: 'portainer.service-instances.item.edit',
+        url: '/edit',
+        views: {
+          'content@': {
+            component: 'serviceInstanceEditView',
+          },
+        },
+      };
+
       var init = {
         name: 'portainer.init',
         abstract: true,
@@ -501,6 +545,10 @@ angular
       $stateRegistryProvider.register(gitopsSources);
       $stateRegistryProvider.register(gitopsSourceDetail);
       $stateRegistryProvider.register(gitopsSourceCreate);
+      $stateRegistryProvider.register(serviceInstances);
+      $stateRegistryProvider.register(serviceInstanceDetail);
+      $stateRegistryProvider.register(serviceInstanceCreate);
+      $stateRegistryProvider.register(serviceInstanceEdit);
       $stateRegistryProvider.register(init);
       $stateRegistryProvider.register(initAdmin);
       $stateRegistryProvider.register(initEdge);

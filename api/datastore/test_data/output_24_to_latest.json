@@ -575,6 +575,8 @@
       "SnapshotJob": {}
     }
   ],
+  "service_instance_operations": null,
+  "service_instances": null,
   "settings": {
     "AgentSecret": "",
     "AllowBindMountsForRegularUsers": true,

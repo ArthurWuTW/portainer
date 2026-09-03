@@ -9323,6 +9323,440 @@ paths:
       summary: List roles
       tags:
         - roles
+  "/service-instance-operations/{id}":
+    get:
+      description: |-
+        Inspect a service instance operation and its per-target results.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceOperationInspect
+      parameters:
+        - description: Service instance operation identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstanceOperation"
+        "400":
+          description: Invalid request
+        "404":
+          description: Operation not found
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Inspect a service instance operation
+      tags:
+        - service_instances
+  /service-instances:
+    get:
+      description: |-
+        List all service instances based on the current user authorizations.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceList
+      responses:
+        "200":
+          description: Success
+          content:
+            "*/*":
+              schema:
+                items:
+                  $ref: "#/components/schemas/portainer.ServiceInstance"
+                type: array
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: List service instances
+      tags:
+        - service_instances
+    post:
+      description: |-
+        Create a new service instance.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceCreate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/serviceinstances.createServiceInstancePayload"
+        description: Service instance configuration
+        required: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstance"
+        "400":
+          description: Invalid request
+        "403":
+          description: Permission denied
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Create a service instance
+      tags:
+        - service_instances
+  "/service-instances/{id}":
+    delete:
+      description: |-
+        Delete a service instance. Stacks deployed on target environments
+        are left in place and become regular stacks.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceDelete
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Success
+        "400":
+          description: Invalid request
+        "404":
+          description: Service instance not found
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Delete a service instance
+      tags:
+        - service_instances
+    get:
+      description: |-
+        Inspect a service instance.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceInspect
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstance"
+        "400":
+          description: Invalid request
+        "404":
+          description: Service instance not found
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Inspect a service instance
+      tags:
+        - service_instances
+    put:
+      description: |-
+        Update an existing service instance.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceUpdate
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/serviceinstances.updateServiceInstancePayload"
+        description: Service instance configuration
+        required: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstance"
+        "400":
+          description: Invalid request
+        "403":
+          description: Permission denied
+        "404":
+          description: Service instance not found
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Update a service instance
+      tags:
+        - service_instances
+  "/service-instances/{id}/deploy":
+    post:
+      description: |-
+        Starts an asynchronous deploy operation against all target environments.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceDeploy
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "202":
+          description: Operation started
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstanceOperation"
+        "400":
+          description: Invalid request
+        "403":
+          description: Permission denied
+        "404":
+          description: Service instance not found
+        "409":
+          description: Operation already in progress
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Deploy a service instance
+      tags:
+        - service_instances
+  "/service-instances/{id}/operations":
+    get:
+      description: |-
+        List all lifecycle operations of a service instance, newest first.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceOperations
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            "*/*":
+              schema:
+                items:
+                  $ref: "#/components/schemas/portainer.ServiceInstanceOperation"
+                type: array
+        "400":
+          description: Invalid request
+        "404":
+          description: Service instance not found
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: List the operations of a service instance
+      tags:
+        - service_instances
+  "/service-instances/{id}/redeploy":
+    post:
+      description: >-
+        Starts an asynchronous redeploy operation against all target
+        environments.
+
+        **Access policy**: authenticated
+      operationId: ServiceInstanceRedeploy
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "202":
+          description: Operation started
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstanceOperation"
+        "400":
+          description: Invalid request
+        "403":
+          description: Permission denied
+        "404":
+          description: Service instance not found
+        "409":
+          description: Operation already in progress
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Redeploy a service instance
+      tags:
+        - service_instances
+  "/service-instances/{id}/refresh":
+    post:
+      description: |-
+        Recomputes the aggregated status of a service instance from the
+        current status of its target stacks.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceRefresh
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstance"
+        "400":
+          description: Invalid request
+        "404":
+          description: Service instance not found
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Refresh the status of a service instance
+      tags:
+        - service_instances
+  "/service-instances/{id}/start":
+    post:
+      description: |-
+        Starts an asynchronous start operation against all target environments.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceStart
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "202":
+          description: Operation started
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstanceOperation"
+        "400":
+          description: Invalid request
+        "403":
+          description: Permission denied
+        "404":
+          description: Service instance not found
+        "409":
+          description: Operation already in progress
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Start a service instance
+      tags:
+        - service_instances
+  "/service-instances/{id}/stop":
+    post:
+      description: |-
+        Starts an asynchronous stop operation against all target environments.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceStop
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "202":
+          description: Operation started
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/portainer.ServiceInstanceOperation"
+        "400":
+          description: Invalid request
+        "403":
+          description: Permission denied
+        "404":
+          description: Service instance not found
+        "409":
+          description: Operation already in progress
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: Stop a service instance
+      tags:
+        - service_instances
+  "/service-instances/{id}/targets":
+    get:
+      description: |-
+        Resolves the current deployment targets of a service instance and
+        reports the managed stack (if any) on each target environment.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceTargets
+      parameters:
+        - description: Service instance identifier
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            "*/*":
+              schema:
+                items:
+                  type: object
+                type: array
+        "400":
+          description: Invalid request
+        "404":
+          description: Service instance not found
+        "500":
+          description: Server error
+      security:
+        - ApiKeyAuth: []
+        - jwt: []
+      summary: List the resolved targets of a service instance
+      tags:
+        - service_instances
   /settings:
     get:
       description: |-
@@ -17014,6 +17448,187 @@ components:
         selfSigned:
           type: boolean
       type: object
+    portainer.ServiceInstance:
+      properties:
+        ComposeFile:
+          description: ComposeFile is the desired compose definition
+          type: string
+        CreatedAt:
+          description: The date in unix time when the service instance was created
+          example: 1587399600
+          type: integer
+        CreatedBy:
+          description: The username which created this service instance
+          example: admin
+          type: string
+        Description:
+          description: Description associated to the service instance
+          example: production web service
+          type: string
+        Env:
+          description: A list of environment variables used during stack deployment
+          items:
+            $ref: "#/components/schemas/portainer.Pair"
+          type: array
+        EnvironmentIds:
+          description: EnvironmentIDs is the list of environment(endpoint) IDs used as
+            targets when TargetType is ENVIRONMENTS
+          items:
+            type: integer
+          type: array
+        GroupId:
+          description: GroupID is the environment group used as target when TargetType is
+            GROUP
+          type: integer
+        Id:
+          description: Service Instance Identifier
+          example: 1
+          type: integer
+        Name:
+          description: Service Instance name
+          example: production-web
+          type: string
+        StackName:
+          description: StackName is the deterministic stack name deployed on each target
+            environment
+          example: si-102-production-web
+          type: string
+        Status:
+          allOf:
+            - $ref: "#/components/schemas/portainer.ServiceInstanceStatus"
+          description: Aggregated status of the service instance
+          example: 2
+        TargetType:
+          allOf:
+            - $ref: "#/components/schemas/portainer.ServiceInstanceTargetType"
+          description: TargetType determines how the deployment targets are resolved
+            (group or explicit environments)
+          example: 1
+        UpdatedAt:
+          description: The date in unix time when the service instance was last updated
+          example: 1587399600
+          type: integer
+      type: object
+    portainer.ServiceInstanceOperation:
+      properties:
+        FinishedAt:
+          description: The date in unix time when the operation finished
+          type: integer
+        Id:
+          description: Operation Identifier
+          example: 1
+          type: integer
+        Results:
+          description: Per-target results of the operation
+          items:
+            $ref: "#/components/schemas/portainer.ServiceInstanceTargetResult"
+          type: array
+        ServiceInstanceId:
+          description: ServiceInstanceID is the service instance this operation belongs to
+          example: 1
+          type: integer
+        StartedAt:
+          description: The date in unix time when the operation started
+          example: 1587399600
+          type: integer
+        Status:
+          allOf:
+            - $ref: "#/components/schemas/portainer.ServiceInstanceOperationStatus"
+          description: Status of the operation
+          example: 2
+        Type:
+          allOf:
+            - $ref: "#/components/schemas/portainer.ServiceInstanceOperationType"
+          description: Type of the operation
+          example: 1
+        UserId:
+          description: UserID of the user who triggered the operation
+          example: 1
+          type: integer
+      type: object
+    portainer.ServiceInstanceOperationStatus:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+      type: integer
+      x-enum-varnames:
+        - ServiceInstanceOperationStatusPending
+        - ServiceInstanceOperationStatusRunning
+        - ServiceInstanceOperationStatusSuccess
+        - ServiceInstanceOperationStatusPartialSuccess
+        - ServiceInstanceOperationStatusFailed
+        - ServiceInstanceOperationStatusCancelled
+    portainer.ServiceInstanceOperationType:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+      type: integer
+      x-enum-varnames:
+        - ServiceInstanceOperationDeploy
+        - ServiceInstanceOperationStart
+        - ServiceInstanceOperationStop
+        - ServiceInstanceOperationRedeploy
+        - ServiceInstanceOperationRefresh
+    portainer.ServiceInstanceStatus:
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+      type: integer
+      x-enum-varnames:
+        - ServiceInstanceStatusUnknown
+        - ServiceInstanceStatusDeploying
+        - ServiceInstanceStatusRunning
+        - ServiceInstanceStatusStopped
+        - ServiceInstanceStatusPartial
+        - ServiceInstanceStatusFailed
+    portainer.ServiceInstanceTargetResult:
+      properties:
+        EnvironmentId:
+          description: Environment(endpoint) identifier
+          example: 1
+          type: integer
+        Error:
+          description: Error message if the operation failed on this target
+          type: string
+        Status:
+          allOf:
+            - $ref: "#/components/schemas/portainer.ServiceInstanceTargetStatus"
+          description: Status of the operation on this target
+          example: 3
+      type: object
+    portainer.ServiceInstanceTargetStatus:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+      type: integer
+      x-enum-varnames:
+        - ServiceInstanceTargetStatusPending
+        - ServiceInstanceTargetStatusRunning
+        - ServiceInstanceTargetStatusSuccess
+        - ServiceInstanceTargetStatusFailed
+        - ServiceInstanceTargetStatusSkipped
+    portainer.ServiceInstanceTargetType:
+      enum:
+        - 1
+        - 2
+      type: integer
+      x-enum-varnames:
+        - ServiceInstanceTargetGroup
+        - ServiceInstanceTargetEnvironments
     portainer.Settings:
       properties:
         AgentSecret:
@@ -17297,6 +17912,13 @@ components:
           type: string
         ResourceControl:
           $ref: "#/components/schemas/portainer.ResourceControl"
+        ServiceInstanceId:
+          description: >-
+            ServiceInstanceID is set when the stack is deployed by a Service
+            Instance.
+
+            It is used to track ownership of the stack.
+          type: integer
         Status:
           allOf:
             - $ref: "#/components/schemas/portainer.StackStatus"
@@ -18444,6 +19066,52 @@ components:
       type: object
     roar.Roar-portainer_EndpointID:
       type: object
+    serviceinstances.createServiceInstancePayload:
+      properties:
+        ComposeFile:
+          type: string
+        Description:
+          type: string
+        Env:
+          items:
+            $ref: "#/components/schemas/portainer.Pair"
+          type: array
+        EnvironmentIds:
+          items:
+            type: integer
+          type: array
+        GroupId:
+          type: integer
+        Name:
+          type: string
+        TargetType:
+          $ref: "#/components/schemas/portainer.ServiceInstanceTargetType"
+      required:
+        - ComposeFile
+        - Name
+        - TargetType
+      type: object
+    serviceinstances.updateServiceInstancePayload:
+      properties:
+        ComposeFile:
+          type: string
+        Description:
+          type: string
+        Env:
+          items:
+            $ref: "#/components/schemas/portainer.Pair"
+          type: array
+        EnvironmentIds:
+          items:
+            type: integer
+          type: array
+        GroupId:
+          type: integer
+        Name:
+          type: string
+        TargetType:
+          $ref: "#/components/schemas/portainer.ServiceInstanceTargetType"
+      type: object
     settings.publicSettingsResponse:
       properties:
         AuthenticationMethod:
@@ -19216,6 +19884,13 @@ components:
           type: string
         ResourceControl:
           $ref: "#/components/schemas/portainer.ResourceControl"
+        ServiceInstanceId:
+          description: >-
+            ServiceInstanceID is set when the stack is deployed by a Service
+            Instance.
+
+            It is used to track ownership of the stack.
+          type: integer
         Status:
           allOf:
             - $ref: "#/components/schemas/portainer.StackStatus"

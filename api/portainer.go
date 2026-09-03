@@ -1326,6 +1326,9 @@ type (
 		// DeploymentStatus records the status progression of the current deployment.
 		// Cleared when a new deployment starts.
 		DeploymentStatus []StackDeploymentStatus `json:"DeploymentStatus,omitempty"`
+		// ServiceInstanceID is set when the stack is deployed by a Service Instance.
+		// It is used to track ownership of the stack.
+		ServiceInstanceID ServiceInstanceID `json:"ServiceInstanceId,omitempty"`
 	}
 
 	// StackOption represents the options for stack deployment
@@ -2119,6 +2122,89 @@ type (
 		NormalizeStackName(name string) string
 		CheckRunningStatus(ctx context.Context, stack *Stack, endpoint *Endpoint) (bool, error)
 	}
+
+	// ServiceInstanceID represents a service instance identifier
+	ServiceInstanceID int
+
+	// ServiceInstanceOperationID represents a service instance operation identifier
+	ServiceInstanceOperationID int
+
+	// ServiceInstanceTargetType represents how a service instance resolves its deployment targets
+	ServiceInstanceTargetType int
+
+	// ServiceInstanceStatus represents the aggregated status of a service instance
+	ServiceInstanceStatus int
+
+	// ServiceInstanceOperationType represents the type of a service instance operation
+	ServiceInstanceOperationType int
+
+	// ServiceInstanceOperationStatus represents the status of a service instance operation
+	ServiceInstanceOperationStatus int
+
+	// ServiceInstanceTargetStatus represents the status of a single target within a service instance operation
+	ServiceInstanceTargetStatus int
+
+	// ServiceInstance represents a logical orchestration object that groups multiple
+	// environments(endpoints) and deploys a shared compose definition to all of them.
+	ServiceInstance struct {
+		// Service Instance Identifier
+		ID ServiceInstanceID `json:"Id" example:"1"`
+		// Service Instance name
+		Name string `json:"Name" example:"production-web"`
+		// Description associated to the service instance
+		Description string `json:"Description" example:"production web service"`
+		// TargetType determines how the deployment targets are resolved (group or explicit environments)
+		TargetType ServiceInstanceTargetType `json:"TargetType" example:"1"`
+		// GroupID is the environment group used as target when TargetType is GROUP
+		GroupID EndpointGroupID `json:"GroupId,omitempty"`
+		// EnvironmentIDs is the list of environment(endpoint) IDs used as targets when TargetType is ENVIRONMENTS
+		EnvironmentIDs []EndpointID `json:"EnvironmentIds,omitempty"`
+		// StackName is the deterministic stack name deployed on each target environment
+		StackName string `json:"StackName" example:"si-102-production-web"`
+		// ComposeFile is the desired compose definition
+		ComposeFile string `json:"ComposeFile"`
+		// A list of environment variables used during stack deployment
+		Env []Pair `json:"Env"`
+		// Aggregated status of the service instance
+		Status ServiceInstanceStatus `json:"Status" example:"2"`
+		// The username which created this service instance
+		CreatedBy string `json:"CreatedBy" example:"admin"`
+		// The date in unix time when the service instance was created
+		CreatedAt int64 `json:"CreatedAt" example:"1587399600"`
+		// The date in unix time when the service instance was last updated
+		UpdatedAt int64 `json:"UpdatedAt" example:"1587399600"`
+	}
+
+	// ServiceInstanceTargetResult represents the result of a service instance operation on a single target environment
+	ServiceInstanceTargetResult struct {
+		// Environment(endpoint) identifier
+		EnvironmentID EndpointID `json:"EnvironmentId" example:"1"`
+		// Status of the operation on this target
+		Status ServiceInstanceTargetStatus `json:"Status" example:"3"`
+		// Error message if the operation failed on this target
+		Error string `json:"Error,omitempty"`
+	}
+
+	// ServiceInstanceOperation represents a lifecycle operation (deploy/start/stop/redeploy/refresh)
+	// executed against a service instance and its resolved targets
+	ServiceInstanceOperation struct {
+		// Operation Identifier
+		ID ServiceInstanceOperationID `json:"Id" example:"1"`
+		// ServiceInstanceID is the service instance this operation belongs to
+		ServiceInstanceID ServiceInstanceID `json:"ServiceInstanceId" example:"1"`
+		// Type of the operation
+		Type ServiceInstanceOperationType `json:"Type" example:"1"`
+		// Status of the operation
+		Status ServiceInstanceOperationStatus `json:"Status" example:"2"`
+		// UserID of the user who triggered the operation
+		UserID UserID `json:"UserId" example:"1"`
+		// The date in unix time when the operation started
+		StartedAt int64 `json:"StartedAt" example:"1587399600"`
+		// The date in unix time when the operation finished
+		FinishedAt *int64 `json:"FinishedAt,omitempty"`
+		// Per-target results of the operation
+		Results []ServiceInstanceTargetResult `json:"Results"`
+	}
 )
 
 const (
@@ -2770,6 +2856,69 @@ const (
 	HelmInstallStatusFailed       HelmInstallStatus = "failed"
 	HelmInstallStatusUninstalling HelmInstallStatus = "uninstalling"
 	HelmInstallStatusConflict     HelmInstallStatus = "conflict"
+)
+
+const (
+	// ServiceInstanceTargetGroup means the service instance targets all environments in a group
+	ServiceInstanceTargetGroup ServiceInstanceTargetType = iota + 1
+	// ServiceInstanceTargetEnvironments means the service instance targets an explicit list of environments
+	ServiceInstanceTargetEnvironments
+)
+
+const (
+	// ServiceInstanceStatusUnknown means the status of the service instance is unknown
+	ServiceInstanceStatusUnknown ServiceInstanceStatus = iota
+	// ServiceInstanceStatusDeploying means a deployment is in progress
+	ServiceInstanceStatusDeploying
+	// ServiceInstanceStatusRunning means all targets are running
+	ServiceInstanceStatusRunning
+	// ServiceInstanceStatusStopped means all targets are stopped
+	ServiceInstanceStatusStopped
+	// ServiceInstanceStatusPartial means targets are in a mixed state
+	ServiceInstanceStatusPartial
+	// ServiceInstanceStatusFailed means at least one target failed and none are running
+	ServiceInstanceStatusFailed
+)
+
+const (
+	// ServiceInstanceOperationDeploy represents a deploy operation
+	ServiceInstanceOperationDeploy ServiceInstanceOperationType = iota + 1
+	// ServiceInstanceOperationStart represents a start operation
+	ServiceInstanceOperationStart
+	// ServiceInstanceOperationStop represents a stop operation
+	ServiceInstanceOperationStop
+	// ServiceInstanceOperationRedeploy represents a redeploy operation
+	ServiceInstanceOperationRedeploy
+	// ServiceInstanceOperationRefresh represents a status refresh operation
+	ServiceInstanceOperationRefresh
+)
+
+const (
+	// ServiceInstanceOperationStatusPending means the operation has not started yet
+	ServiceInstanceOperationStatusPending ServiceInstanceOperationStatus = iota + 1
+	// ServiceInstanceOperationStatusRunning means the operation is in progress
+	ServiceInstanceOperationStatusRunning
+	// ServiceInstanceOperationStatusSuccess means all targets succeeded
+	ServiceInstanceOperationStatusSuccess
+	// ServiceInstanceOperationStatusPartialSuccess means some targets succeeded and some failed
+	ServiceInstanceOperationStatusPartialSuccess
+	// ServiceInstanceOperationStatusFailed means all targets failed
+	ServiceInstanceOperationStatusFailed
+	// ServiceInstanceOperationStatusCancelled means the operation was cancelled
+	ServiceInstanceOperationStatusCancelled
+)
+
+const (
+	// ServiceInstanceTargetStatusPending means the target operation has not started yet
+	ServiceInstanceTargetStatusPending ServiceInstanceTargetStatus = iota + 1
+	// ServiceInstanceTargetStatusRunning means the target operation is in progress
+	ServiceInstanceTargetStatusRunning
+	// ServiceInstanceTargetStatusSuccess means the target operation succeeded
+	ServiceInstanceTargetStatusSuccess
+	// ServiceInstanceTargetStatusFailed means the target operation failed
+	ServiceInstanceTargetStatusFailed
+	// ServiceInstanceTargetStatusSkipped means the target operation was skipped (fail-fast)
+	ServiceInstanceTargetStatusSkipped
 )
 
 func DefaultEndpointSecuritySettings() EndpointSecuritySettings {

@@ -3324,6 +3324,236 @@ export type PortainerSslSettings = {
   selfSigned?: boolean;
 };
 
+export type PortainerServiceInstance = {
+  /**
+   * ComposeFile is the desired compose definition
+   */
+  ComposeFile?: string;
+  /**
+   * The date in unix time when the service instance was created
+   */
+  CreatedAt?: number;
+  /**
+   * The username which created this service instance
+   */
+  CreatedBy?: string;
+  /**
+   * Description associated to the service instance
+   */
+  Description?: string;
+  /**
+   * A list of environment variables used during stack deployment
+   */
+  Env?: Array<PortainerPair>;
+  /**
+   * EnvironmentIDs is the list of environment(endpoint) IDs used as targets when TargetType is ENVIRONMENTS
+   */
+  EnvironmentIds?: Array<number>;
+  /**
+   * GroupID is the environment group used as target when TargetType is GROUP
+   */
+  GroupId?: number;
+  /**
+   * Service Instance Identifier
+   */
+  Id?: number;
+  /**
+   * Service Instance name
+   */
+  Name?: string;
+  /**
+   * StackName is the deterministic stack name deployed on each target environment
+   */
+  StackName?: string;
+  /**
+   * Aggregated status of the service instance
+   */
+  Status?: PortainerServiceInstanceStatus;
+  /**
+   * TargetType determines how the deployment targets are resolved (group or explicit environments)
+   */
+  TargetType?: PortainerServiceInstanceTargetType;
+  /**
+   * The date in unix time when the service instance was last updated
+   */
+  UpdatedAt?: number;
+};
+
+export type PortainerServiceInstanceOperation = {
+  /**
+   * The date in unix time when the operation finished
+   */
+  FinishedAt?: number;
+  /**
+   * Operation Identifier
+   */
+  Id?: number;
+  /**
+   * Per-target results of the operation
+   */
+  Results?: Array<PortainerServiceInstanceTargetResult>;
+  /**
+   * ServiceInstanceID is the service instance this operation belongs to
+   */
+  ServiceInstanceId?: number;
+  /**
+   * The date in unix time when the operation started
+   */
+  StartedAt?: number;
+  /**
+   * Status of the operation
+   */
+  Status?: PortainerServiceInstanceOperationStatus;
+  /**
+   * Type of the operation
+   */
+  Type?: PortainerServiceInstanceOperationType;
+  /**
+   * UserID of the user who triggered the operation
+   */
+  UserId?: number;
+};
+
+export const PortainerServiceInstanceOperationStatus = {
+  /**
+   * ServiceInstanceOperationStatusPending
+   */
+  SERVICE_INSTANCE_OPERATION_STATUS_PENDING: 1,
+  /**
+   * ServiceInstanceOperationStatusRunning
+   */
+  SERVICE_INSTANCE_OPERATION_STATUS_RUNNING: 2,
+  /**
+   * ServiceInstanceOperationStatusSuccess
+   */
+  SERVICE_INSTANCE_OPERATION_STATUS_SUCCESS: 3,
+  /**
+   * ServiceInstanceOperationStatusPartialSuccess
+   */
+  SERVICE_INSTANCE_OPERATION_STATUS_PARTIAL_SUCCESS: 4,
+  /**
+   * ServiceInstanceOperationStatusFailed
+   */
+  SERVICE_INSTANCE_OPERATION_STATUS_FAILED: 5,
+  /**
+   * ServiceInstanceOperationStatusCancelled
+   */
+  SERVICE_INSTANCE_OPERATION_STATUS_CANCELLED: 6,
+} as const;
+
+export type PortainerServiceInstanceOperationStatus =
+  (typeof PortainerServiceInstanceOperationStatus)[keyof typeof PortainerServiceInstanceOperationStatus];
+
+export const PortainerServiceInstanceOperationType = {
+  /**
+   * ServiceInstanceOperationDeploy
+   */
+  SERVICE_INSTANCE_OPERATION_DEPLOY: 1,
+  /**
+   * ServiceInstanceOperationStart
+   */
+  SERVICE_INSTANCE_OPERATION_START: 2,
+  /**
+   * ServiceInstanceOperationStop
+   */
+  SERVICE_INSTANCE_OPERATION_STOP: 3,
+  /**
+   * ServiceInstanceOperationRedeploy
+   */
+  SERVICE_INSTANCE_OPERATION_REDEPLOY: 4,
+  /**
+   * ServiceInstanceOperationRefresh
+   */
+  SERVICE_INSTANCE_OPERATION_REFRESH: 5,
+} as const;
+
+export type PortainerServiceInstanceOperationType =
+  (typeof PortainerServiceInstanceOperationType)[keyof typeof PortainerServiceInstanceOperationType];
+
+export const PortainerServiceInstanceStatus = {
+  /**
+   * ServiceInstanceStatusUnknown
+   */
+  SERVICE_INSTANCE_STATUS_UNKNOWN: 0,
+  /**
+   * ServiceInstanceStatusDeploying
+   */
+  SERVICE_INSTANCE_STATUS_DEPLOYING: 1,
+  /**
+   * ServiceInstanceStatusRunning
+   */
+  SERVICE_INSTANCE_STATUS_RUNNING: 2,
+  /**
+   * ServiceInstanceStatusStopped
+   */
+  SERVICE_INSTANCE_STATUS_STOPPED: 3,
+  /**
+   * ServiceInstanceStatusPartial
+   */
+  SERVICE_INSTANCE_STATUS_PARTIAL: 4,
+  /**
+   * ServiceInstanceStatusFailed
+   */
+  SERVICE_INSTANCE_STATUS_FAILED: 5,
+} as const;
+
+export type PortainerServiceInstanceStatus =
+  (typeof PortainerServiceInstanceStatus)[keyof typeof PortainerServiceInstanceStatus];
+
+export type PortainerServiceInstanceTargetResult = {
+  /**
+   * Environment(endpoint) identifier
+   */
+  EnvironmentId?: number;
+  /**
+   * Error message if the operation failed on this target
+   */
+  Error?: string;
+  /**
+   * Status of the operation on this target
+   */
+  Status?: PortainerServiceInstanceTargetStatus;
+};
+
+export const PortainerServiceInstanceTargetStatus = {
+  /**
+   * ServiceInstanceTargetStatusPending
+   */
+  SERVICE_INSTANCE_TARGET_STATUS_PENDING: 1,
+  /**
+   * ServiceInstanceTargetStatusRunning
+   */
+  SERVICE_INSTANCE_TARGET_STATUS_RUNNING: 2,
+  /**
+   * ServiceInstanceTargetStatusSuccess
+   */
+  SERVICE_INSTANCE_TARGET_STATUS_SUCCESS: 3,
+  /**
+   * ServiceInstanceTargetStatusFailed
+   */
+  SERVICE_INSTANCE_TARGET_STATUS_FAILED: 4,
+  /**
+   * ServiceInstanceTargetStatusSkipped
+   */
+  SERVICE_INSTANCE_TARGET_STATUS_SKIPPED: 5,
+} as const;
+
+export type PortainerServiceInstanceTargetStatus =
+  (typeof PortainerServiceInstanceTargetStatus)[keyof typeof PortainerServiceInstanceTargetStatus];
+
+export const PortainerServiceInstanceTargetType = {
+  /**
+   * ServiceInstanceTargetGroup
+   */
+  SERVICE_INSTANCE_TARGET_GROUP: 1 /**
+   * ServiceInstanceTargetEnvironments
+   */,
+  SERVICE_INSTANCE_TARGET_ENVIRONMENTS: 2,
+} as const;
+
+export type PortainerServiceInstanceTargetType =
+  (typeof PortainerServiceInstanceTargetType)[keyof typeof PortainerServiceInstanceTargetType];
+
 export type PortainerSettings = {
   /**
    * Container environment parameter AGENT_SECRET
@@ -3556,6 +3786,11 @@ export type PortainerStack = {
    */
   ProjectPath?: string;
   ResourceControl?: PortainerResourceControl;
+  /**
+   * ServiceInstanceID is set when the stack is deployed by a Service Instance.
+   * It is used to track ownership of the stack.
+   */
+  ServiceInstanceId?: number;
   /**
    * Stack status (1 - active, 2 - inactive, 3 - deploying, 4 - error)
    */
@@ -4595,6 +4830,26 @@ export type RoarRoarPortainerEndpointId = {
   [key: string]: unknown;
 };
 
+export type ServiceinstancesCreateServiceInstancePayload = {
+  ComposeFile: string;
+  Description?: string;
+  Env?: Array<PortainerPair>;
+  EnvironmentIds?: Array<number>;
+  GroupId?: number;
+  Name: string;
+  TargetType: PortainerServiceInstanceTargetType;
+};
+
+export type ServiceinstancesUpdateServiceInstancePayload = {
+  ComposeFile?: string;
+  Description?: string;
+  Env?: Array<PortainerPair>;
+  EnvironmentIds?: Array<number>;
+  GroupId?: number;
+  Name?: string;
+  TargetType?: PortainerServiceInstanceTargetType;
+};
+
 export type SettingsPublicSettingsResponse = {
   /**
    * Active authentication method for the Portainer instance. Valid values are: 1 for internal, 2 for LDAP, or 3 for oauth
@@ -5164,6 +5419,11 @@ export type StacksStackResponse = {
    */
   ProjectPath?: string;
   ResourceControl?: PortainerResourceControl;
+  /**
+   * ServiceInstanceID is set when the stack is deployed by a Service Instance.
+   * It is used to track ownership of the stack.
+   */
+  ServiceInstanceId?: number;
   /**
    * Stack status (1 - active, 2 - inactive, 3 - deploying, 4 - error)
    */
@@ -22587,6 +22847,513 @@ export type RoleListResponses = {
 };
 
 export type RoleListResponse = RoleListResponses[keyof RoleListResponses];
+
+export type ServiceInstanceOperationInspectData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance operation identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instance-operations/{id}';
+};
+
+export type ServiceInstanceOperationInspectErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Operation not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceOperationInspectResponses = {
+  /**
+   * Success
+   */
+  200: PortainerServiceInstanceOperation;
+};
+
+export type ServiceInstanceOperationInspectResponse =
+  ServiceInstanceOperationInspectResponses[keyof ServiceInstanceOperationInspectResponses];
+
+export type ServiceInstanceListData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/service-instances';
+};
+
+export type ServiceInstanceListErrors = {
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceListResponses = {
+  /**
+   * Success
+   */
+  200: Array<PortainerServiceInstance>;
+};
+
+export type ServiceInstanceListResponse =
+  ServiceInstanceListResponses[keyof ServiceInstanceListResponses];
+
+export type ServiceInstanceCreateData = {
+  /**
+   * Service instance configuration
+   */
+  body: ServiceinstancesCreateServiceInstancePayload;
+  path?: never;
+  query?: never;
+  url: '/service-instances';
+};
+
+export type ServiceInstanceCreateErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Permission denied
+   */
+  403: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceCreateResponses = {
+  /**
+   * Success
+   */
+  200: PortainerServiceInstance;
+};
+
+export type ServiceInstanceCreateResponse =
+  ServiceInstanceCreateResponses[keyof ServiceInstanceCreateResponses];
+
+export type ServiceInstanceDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}';
+};
+
+export type ServiceInstanceDeleteErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceDeleteResponses = {
+  /**
+   * Success
+   */
+  204: void;
+};
+
+export type ServiceInstanceDeleteResponse =
+  ServiceInstanceDeleteResponses[keyof ServiceInstanceDeleteResponses];
+
+export type ServiceInstanceInspectData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}';
+};
+
+export type ServiceInstanceInspectErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceInspectResponses = {
+  /**
+   * Success
+   */
+  200: PortainerServiceInstance;
+};
+
+export type ServiceInstanceInspectResponse =
+  ServiceInstanceInspectResponses[keyof ServiceInstanceInspectResponses];
+
+export type ServiceInstanceUpdateData = {
+  /**
+   * Service instance configuration
+   */
+  body: ServiceinstancesUpdateServiceInstancePayload;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}';
+};
+
+export type ServiceInstanceUpdateErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Permission denied
+   */
+  403: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceUpdateResponses = {
+  /**
+   * Success
+   */
+  200: PortainerServiceInstance;
+};
+
+export type ServiceInstanceUpdateResponse =
+  ServiceInstanceUpdateResponses[keyof ServiceInstanceUpdateResponses];
+
+export type ServiceInstanceDeployData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/deploy';
+};
+
+export type ServiceInstanceDeployErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Permission denied
+   */
+  403: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Operation already in progress
+   */
+  409: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceDeployResponses = {
+  /**
+   * Operation started
+   */
+  202: PortainerServiceInstanceOperation;
+};
+
+export type ServiceInstanceDeployResponse =
+  ServiceInstanceDeployResponses[keyof ServiceInstanceDeployResponses];
+
+export type ServiceInstanceOperationsData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/operations';
+};
+
+export type ServiceInstanceOperationsErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceOperationsResponses = {
+  /**
+   * Success
+   */
+  200: Array<PortainerServiceInstanceOperation>;
+};
+
+export type ServiceInstanceOperationsResponse =
+  ServiceInstanceOperationsResponses[keyof ServiceInstanceOperationsResponses];
+
+export type ServiceInstanceRedeployData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/redeploy';
+};
+
+export type ServiceInstanceRedeployErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Permission denied
+   */
+  403: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Operation already in progress
+   */
+  409: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceRedeployResponses = {
+  /**
+   * Operation started
+   */
+  202: PortainerServiceInstanceOperation;
+};
+
+export type ServiceInstanceRedeployResponse =
+  ServiceInstanceRedeployResponses[keyof ServiceInstanceRedeployResponses];
+
+export type ServiceInstanceRefreshData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/refresh';
+};
+
+export type ServiceInstanceRefreshErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceRefreshResponses = {
+  /**
+   * Success
+   */
+  200: PortainerServiceInstance;
+};
+
+export type ServiceInstanceRefreshResponse =
+  ServiceInstanceRefreshResponses[keyof ServiceInstanceRefreshResponses];
+
+export type ServiceInstanceStartData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/start';
+};
+
+export type ServiceInstanceStartErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Permission denied
+   */
+  403: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Operation already in progress
+   */
+  409: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceStartResponses = {
+  /**
+   * Operation started
+   */
+  202: PortainerServiceInstanceOperation;
+};
+
+export type ServiceInstanceStartResponse =
+  ServiceInstanceStartResponses[keyof ServiceInstanceStartResponses];
+
+export type ServiceInstanceStopData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/stop';
+};
+
+export type ServiceInstanceStopErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Permission denied
+   */
+  403: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Operation already in progress
+   */
+  409: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceStopResponses = {
+  /**
+   * Operation started
+   */
+  202: PortainerServiceInstanceOperation;
+};
+
+export type ServiceInstanceStopResponse =
+  ServiceInstanceStopResponses[keyof ServiceInstanceStopResponses];
+
+export type ServiceInstanceTargetsData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/targets';
+};
+
+export type ServiceInstanceTargetsErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceTargetsResponses = {
+  /**
+   * Success
+   */
+  200: Array<{
+    [key: string]: unknown;
+  }>;
+};
+
+export type ServiceInstanceTargetsResponse =
+  ServiceInstanceTargetsResponses[keyof ServiceInstanceTargetsResponses];
 
 export type SettingsInspectData = {
   body?: never;

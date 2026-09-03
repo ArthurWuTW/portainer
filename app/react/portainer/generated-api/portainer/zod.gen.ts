@@ -1364,6 +1364,78 @@ export const zPortainerSslSettings = z.object({
   selfSigned: z.boolean().optional(),
 });
 
+export const zPortainerServiceInstanceOperationStatus = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+]);
+
+export const zPortainerServiceInstanceOperationType = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+]);
+
+export const zPortainerServiceInstanceStatus = z.union([
+  z.literal(0),
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+]);
+
+export const zPortainerServiceInstanceTargetStatus = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+]);
+
+export const zPortainerServiceInstanceTargetResult = z.object({
+  EnvironmentId: z.int().optional(),
+  Error: z.string().optional(),
+  Status: zPortainerServiceInstanceTargetStatus.optional(),
+});
+
+export const zPortainerServiceInstanceOperation = z.object({
+  FinishedAt: z.int().optional(),
+  Id: z.int().optional(),
+  Results: z.array(zPortainerServiceInstanceTargetResult).optional(),
+  ServiceInstanceId: z.int().optional(),
+  StartedAt: z.int().optional(),
+  Status: zPortainerServiceInstanceOperationStatus.optional(),
+  Type: zPortainerServiceInstanceOperationType.optional(),
+  UserId: z.int().optional(),
+});
+
+export const zPortainerServiceInstanceTargetType = z.union([
+  z.literal(1),
+  z.literal(2),
+]);
+
+export const zPortainerServiceInstance = z.object({
+  ComposeFile: z.string().optional(),
+  CreatedAt: z.int().optional(),
+  CreatedBy: z.string().optional(),
+  Description: z.string().optional(),
+  Env: z.array(zPortainerPair).optional(),
+  EnvironmentIds: z.array(z.int()).optional(),
+  GroupId: z.int().optional(),
+  Id: z.int().optional(),
+  Name: z.string().optional(),
+  StackName: z.string().optional(),
+  Status: zPortainerServiceInstanceStatus.optional(),
+  TargetType: zPortainerServiceInstanceTargetType.optional(),
+  UpdatedAt: z.int().optional(),
+});
+
 export const zPortainerSourceStatus = z.union([
   z.literal(0),
   z.literal(1),
@@ -1833,6 +1905,7 @@ export const zPortainerStack = z.object({
   Option: zPortainerStackOption.optional(),
   ProjectPath: z.string().optional(),
   ResourceControl: zPortainerResourceControl.optional(),
+  ServiceInstanceId: z.int().optional(),
   Status: zPortainerStackStatus.optional(),
   SwarmId: z.string().optional(),
   Type: zPortainerStackType.optional(),
@@ -2110,6 +2183,26 @@ export const zPortainerEdgeGroup = z.object({
   TagIds: z.array(z.int()).optional(),
 });
 
+export const zServiceinstancesCreateServiceInstancePayload = z.object({
+  ComposeFile: z.string(),
+  Description: z.string().optional(),
+  Env: z.array(zPortainerPair).optional(),
+  EnvironmentIds: z.array(z.int()).optional(),
+  GroupId: z.int().optional(),
+  Name: z.string(),
+  TargetType: zPortainerServiceInstanceTargetType,
+});
+
+export const zServiceinstancesUpdateServiceInstancePayload = z.object({
+  ComposeFile: z.string().optional(),
+  Description: z.string().optional(),
+  Env: z.array(zPortainerPair).optional(),
+  EnvironmentIds: z.array(z.int()).optional(),
+  GroupId: z.int().optional(),
+  Name: z.string().optional(),
+  TargetType: zPortainerServiceInstanceTargetType.optional(),
+});
+
 export const zSettingsPublicSettingsResponse = z.object({
   AuthenticationMethod: zPortainerAuthenticationMethod.optional(),
   Edge: z
@@ -2336,6 +2429,7 @@ export const zStacksStackResponse = z.object({
   Option: zPortainerStackOption.optional(),
   ProjectPath: z.string().optional(),
   ResourceControl: zPortainerResourceControl.optional(),
+  ServiceInstanceId: z.int().optional(),
   Status: zPortainerStackStatus.optional(),
   SwarmId: z.string().optional(),
   Type: zPortainerStackType.optional(),
@@ -7134,6 +7228,134 @@ export const zRestoreHeaders = z.object({
  * Success
  */
 export const zRoleListResponse = z.array(zPortainerRole);
+
+export const zServiceInstanceOperationInspectPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Success
+ */
+export const zServiceInstanceOperationInspectResponse =
+  zPortainerServiceInstanceOperation;
+
+/**
+ * Success
+ */
+export const zServiceInstanceListResponse = z.array(zPortainerServiceInstance);
+
+/**
+ * Service instance configuration
+ */
+export const zServiceInstanceCreateBody =
+  zServiceinstancesCreateServiceInstancePayload;
+
+/**
+ * Success
+ */
+export const zServiceInstanceCreateResponse = zPortainerServiceInstance;
+
+export const zServiceInstanceDeletePath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Success
+ */
+export const zServiceInstanceDeleteResponse = z.void();
+
+export const zServiceInstanceInspectPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Success
+ */
+export const zServiceInstanceInspectResponse = zPortainerServiceInstance;
+
+/**
+ * Service instance configuration
+ */
+export const zServiceInstanceUpdateBody =
+  zServiceinstancesUpdateServiceInstancePayload;
+
+export const zServiceInstanceUpdatePath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Success
+ */
+export const zServiceInstanceUpdateResponse = zPortainerServiceInstance;
+
+export const zServiceInstanceDeployPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Operation started
+ */
+export const zServiceInstanceDeployResponse =
+  zPortainerServiceInstanceOperation;
+
+export const zServiceInstanceOperationsPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Success
+ */
+export const zServiceInstanceOperationsResponse = z.array(
+  zPortainerServiceInstanceOperation
+);
+
+export const zServiceInstanceRedeployPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Operation started
+ */
+export const zServiceInstanceRedeployResponse =
+  zPortainerServiceInstanceOperation;
+
+export const zServiceInstanceRefreshPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Success
+ */
+export const zServiceInstanceRefreshResponse = zPortainerServiceInstance;
+
+export const zServiceInstanceStartPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Operation started
+ */
+export const zServiceInstanceStartResponse = zPortainerServiceInstanceOperation;
+
+export const zServiceInstanceStopPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Operation started
+ */
+export const zServiceInstanceStopResponse = zPortainerServiceInstanceOperation;
+
+export const zServiceInstanceTargetsPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Success
+ */
+export const zServiceInstanceTargetsResponse = z.array(
+  z.record(z.string(), z.unknown())
+);
 
 /**
  * Success

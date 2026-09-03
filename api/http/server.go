@@ -38,6 +38,7 @@ import (
 	"github.com/portainer/portainer/api/http/handler/registries"
 	"github.com/portainer/portainer/api/http/handler/resourcecontrols"
 	"github.com/portainer/portainer/api/http/handler/roles"
+	"github.com/portainer/portainer/api/http/handler/serviceinstances"
 	"github.com/portainer/portainer/api/http/handler/settings"
 	sslhandler "github.com/portainer/portainer/api/http/handler/ssl"
 	"github.com/portainer/portainer/api/http/handler/stacks"
@@ -66,6 +67,7 @@ import (
 	motdservice "github.com/portainer/portainer/api/motd"
 	"github.com/portainer/portainer/api/pendingactions"
 	"github.com/portainer/portainer/api/platform"
+	"github.com/portainer/portainer/api/serviceinstance"
 	"github.com/portainer/portainer/api/stacks/deployments"
 	"github.com/portainer/portainer/api/stacks/teardown"
 	libhelmtypes "github.com/portainer/portainer/pkg/libhelm/types"
@@ -245,6 +247,10 @@ func (server *Server) Start(ctx context.Context) error {
 
 	teardownService := teardown.NewService(server.FileService, server.SwarmStackManager, server.ComposeStackManager, server.StackDeployer, server.KubernetesDeployer)
 	var stackHandler = stacks.NewHandler(requestBouncer, teardownService)
+
+	var serviceInstanceHandler = serviceinstances.NewHandler(requestBouncer)
+	serviceInstanceHandler.DataStore = server.DataStore
+	serviceInstanceHandler.Service = serviceinstance.NewService(server.DataStore, server.FileService, server.StackDeployer)
 	stackHandler.DataStore = server.DataStore
 	stackHandler.DockerClientFactory = server.DockerClientFactory
 	stackHandler.FileService = server.FileService
@@ -326,6 +332,7 @@ func (server *Server) Start(ctx context.Context) error {
 		MOTDHandler:            motdHandler,
 		RegistryHandler:        registryHandler,
 		ResourceControlHandler: resourceControlHandler,
+		ServiceInstanceHandler: serviceInstanceHandler,
 		SettingsHandler:        settingsHandler,
 		SSLHandler:             sslHandler,
 		StackHandler:           stackHandler,

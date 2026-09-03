@@ -638,6 +638,45 @@ import type {
   ScaleKubernetesDeploymentData,
   ScaleKubernetesDeploymentErrors,
   ScaleKubernetesDeploymentResponses,
+  ServiceInstanceCreateData,
+  ServiceInstanceCreateErrors,
+  ServiceInstanceCreateResponses,
+  ServiceInstanceDeleteData,
+  ServiceInstanceDeleteErrors,
+  ServiceInstanceDeleteResponses,
+  ServiceInstanceDeployData,
+  ServiceInstanceDeployErrors,
+  ServiceInstanceDeployResponses,
+  ServiceInstanceInspectData,
+  ServiceInstanceInspectErrors,
+  ServiceInstanceInspectResponses,
+  ServiceInstanceListData,
+  ServiceInstanceListErrors,
+  ServiceInstanceListResponses,
+  ServiceInstanceOperationInspectData,
+  ServiceInstanceOperationInspectErrors,
+  ServiceInstanceOperationInspectResponses,
+  ServiceInstanceOperationsData,
+  ServiceInstanceOperationsErrors,
+  ServiceInstanceOperationsResponses,
+  ServiceInstanceRedeployData,
+  ServiceInstanceRedeployErrors,
+  ServiceInstanceRedeployResponses,
+  ServiceInstanceRefreshData,
+  ServiceInstanceRefreshErrors,
+  ServiceInstanceRefreshResponses,
+  ServiceInstanceStartData,
+  ServiceInstanceStartErrors,
+  ServiceInstanceStartResponses,
+  ServiceInstanceStopData,
+  ServiceInstanceStopErrors,
+  ServiceInstanceStopResponses,
+  ServiceInstanceTargetsData,
+  ServiceInstanceTargetsErrors,
+  ServiceInstanceTargetsResponses,
+  ServiceInstanceUpdateData,
+  ServiceInstanceUpdateErrors,
+  ServiceInstanceUpdateResponses,
   SetDefaultKubernetesStorageClassData,
   SetDefaultKubernetesStorageClassErrors,
   SetDefaultKubernetesStorageClassResponses,
@@ -1340,6 +1379,32 @@ import {
   zScaleKubernetesDeploymentBody,
   zScaleKubernetesDeploymentPath,
   zScaleKubernetesDeploymentResponse,
+  zServiceInstanceCreateBody,
+  zServiceInstanceCreateResponse,
+  zServiceInstanceDeletePath,
+  zServiceInstanceDeleteResponse,
+  zServiceInstanceDeployPath,
+  zServiceInstanceDeployResponse,
+  zServiceInstanceInspectPath,
+  zServiceInstanceInspectResponse,
+  zServiceInstanceListResponse,
+  zServiceInstanceOperationInspectPath,
+  zServiceInstanceOperationInspectResponse,
+  zServiceInstanceOperationsPath,
+  zServiceInstanceOperationsResponse,
+  zServiceInstanceRedeployPath,
+  zServiceInstanceRedeployResponse,
+  zServiceInstanceRefreshPath,
+  zServiceInstanceRefreshResponse,
+  zServiceInstanceStartPath,
+  zServiceInstanceStartResponse,
+  zServiceInstanceStopPath,
+  zServiceInstanceStopResponse,
+  zServiceInstanceTargetsPath,
+  zServiceInstanceTargetsResponse,
+  zServiceInstanceUpdateBody,
+  zServiceInstanceUpdatePath,
+  zServiceInstanceUpdateResponse,
   zSetDefaultKubernetesStorageClassPath,
   zSetDefaultKubernetesStorageClassResponse,
   zSettingsInspectResponse,
@@ -9427,6 +9492,489 @@ export const roleList = <ThrowOnError extends boolean = true>(
       { name: 'Authorization', type: 'apiKey' },
     ],
     url: '/roles',
+    ...options,
+  });
+
+/**
+ * Inspect a service instance operation
+ *
+ * Inspect a service instance operation and its per-target results.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceOperationInspect = <
+  ThrowOnError extends boolean = true,
+>(
+  options: Options<ServiceInstanceOperationInspectData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceOperationInspectResponses,
+  ServiceInstanceOperationInspectErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ServiceInstanceOperationInspectResponses,
+    ServiceInstanceOperationInspectErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceOperationInspectPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceOperationInspectResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instance-operations/{id}',
+    ...options,
+  });
+
+/**
+ * List service instances
+ *
+ * List all service instances based on the current user authorizations.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceList = <ThrowOnError extends boolean = true>(
+  options?: Options<ServiceInstanceListData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceListResponses,
+  ServiceInstanceListErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ServiceInstanceListResponses,
+    ServiceInstanceListErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceListResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances',
+    ...options,
+  });
+
+/**
+ * Create a service instance
+ *
+ * Create a new service instance.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceCreate = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceCreateData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceCreateResponses,
+  ServiceInstanceCreateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ServiceInstanceCreateResponses,
+    ServiceInstanceCreateErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zServiceInstanceCreateBody,
+          path: z.never().optional(),
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zServiceInstanceCreateResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete a service instance
+ *
+ * Delete a service instance. Stacks deployed on target environments
+ * are left in place and become regular stacks.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceDelete = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceDeleteData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceDeleteResponses,
+  ServiceInstanceDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    ServiceInstanceDeleteResponses,
+    ServiceInstanceDeleteErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceDeletePath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceDeleteResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}',
+    ...options,
+  });
+
+/**
+ * Inspect a service instance
+ *
+ * Inspect a service instance.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceInspect = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceInspectData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceInspectResponses,
+  ServiceInstanceInspectErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ServiceInstanceInspectResponses,
+    ServiceInstanceInspectErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceInspectPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceInspectResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}',
+    ...options,
+  });
+
+/**
+ * Update a service instance
+ *
+ * Update an existing service instance.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceUpdate = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceUpdateData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceUpdateResponses,
+  ServiceInstanceUpdateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    ServiceInstanceUpdateResponses,
+    ServiceInstanceUpdateErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zServiceInstanceUpdateBody,
+          path: zServiceInstanceUpdatePath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zServiceInstanceUpdateResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Deploy a service instance
+ *
+ * Starts an asynchronous deploy operation against all target environments.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceDeploy = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceDeployData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceDeployResponses,
+  ServiceInstanceDeployErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ServiceInstanceDeployResponses,
+    ServiceInstanceDeployErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceDeployPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceDeployResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/deploy',
+    ...options,
+  });
+
+/**
+ * List the operations of a service instance
+ *
+ * List all lifecycle operations of a service instance, newest first.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceOperations = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceOperationsData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceOperationsResponses,
+  ServiceInstanceOperationsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ServiceInstanceOperationsResponses,
+    ServiceInstanceOperationsErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceOperationsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceOperationsResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/operations',
+    ...options,
+  });
+
+/**
+ * Redeploy a service instance
+ *
+ * Starts an asynchronous redeploy operation against all target environments.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceRedeploy = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceRedeployData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceRedeployResponses,
+  ServiceInstanceRedeployErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ServiceInstanceRedeployResponses,
+    ServiceInstanceRedeployErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceRedeployPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceRedeployResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/redeploy',
+    ...options,
+  });
+
+/**
+ * Refresh the status of a service instance
+ *
+ * Recomputes the aggregated status of a service instance from the
+ * current status of its target stacks.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceRefresh = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceRefreshData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceRefreshResponses,
+  ServiceInstanceRefreshErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ServiceInstanceRefreshResponses,
+    ServiceInstanceRefreshErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceRefreshPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceRefreshResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/refresh',
+    ...options,
+  });
+
+/**
+ * Start a service instance
+ *
+ * Starts an asynchronous start operation against all target environments.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceStart = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceStartData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceStartResponses,
+  ServiceInstanceStartErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ServiceInstanceStartResponses,
+    ServiceInstanceStartErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceStartPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceStartResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/start',
+    ...options,
+  });
+
+/**
+ * Stop a service instance
+ *
+ * Starts an asynchronous stop operation against all target environments.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceStop = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceStopData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceStopResponses,
+  ServiceInstanceStopErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ServiceInstanceStopResponses,
+    ServiceInstanceStopErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceStopPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceStopResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/stop',
+    ...options,
+  });
+
+/**
+ * List the resolved targets of a service instance
+ *
+ * Resolves the current deployment targets of a service instance and
+ * reports the managed stack (if any) on each target environment.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceTargets = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceTargetsData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceTargetsResponses,
+  ServiceInstanceTargetsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ServiceInstanceTargetsResponses,
+    ServiceInstanceTargetsErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceTargetsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceTargetsResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/targets',
     ...options,
   });
 

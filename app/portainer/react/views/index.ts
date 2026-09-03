@@ -21,6 +21,7 @@ import { templatesModule } from './templates';
 import { usersModule } from './users';
 import { environmentsModule } from './environments';
 import { gitopsViewsModule } from './gitops';
+import { serviceInstancesModule } from './service-instances';
 
 export const viewsModule = angular
   .module('portainer.app.react.views', [
@@ -34,6 +35,7 @@ export const viewsModule = angular
     usersModule,
     environmentsModule,
     gitopsViewsModule,
+    serviceInstancesModule,
   ])
   .component(
     'homeView',

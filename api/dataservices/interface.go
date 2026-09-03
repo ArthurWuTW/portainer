@@ -22,6 +22,8 @@ type (
 		ResourceControl() ResourceControlService
 		Role() RoleService
 		APIKeyRepository() APIKeyRepository
+		ServiceInstance() ServiceInstanceService
+		ServiceInstanceOperation() ServiceInstanceOperationService
 		Settings() SettingsService
 		Snapshot() SnapshotService
 		SSLSettings() SSLSettingsService
@@ -167,6 +169,19 @@ type (
 	// RoleService represents a service for managing user roles
 	RoleService interface {
 		BaseCRUD[portainer.Role, portainer.RoleID]
+	}
+
+	// ServiceInstanceService represents a service for managing service instance data
+	ServiceInstanceService interface {
+		BaseCRUD[portainer.ServiceInstance, portainer.ServiceInstanceID]
+		GetNextIdentifier() int
+	}
+
+	// ServiceInstanceOperationService represents a service for managing service instance operation data
+	ServiceInstanceOperationService interface {
+		BaseCRUD[portainer.ServiceInstanceOperation, portainer.ServiceInstanceOperationID]
+		GetNextIdentifier() int
+		ReadAllByServiceInstanceID(serviceInstanceID portainer.ServiceInstanceID) ([]portainer.ServiceInstanceOperation, error)
 	}
 
 	// APIKeyRepositoryService
