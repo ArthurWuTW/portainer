@@ -12,6 +12,7 @@ import { useServiceInstance } from '../queries/useServiceInstance';
 import { ServiceInstanceResourceHeader } from './ServiceInstanceResourceHeader';
 import { OverviewTab } from './OverviewTab';
 import { TargetsTab } from './TargetsTab';
+import { MonitorTab } from './MonitorTab';
 import { ComposeTab } from './ComposeTab';
 import { OperationsTab } from './OperationsTab';
 
@@ -20,7 +21,7 @@ const breadcrumbs = [
   'Service Instance',
 ];
 
-type TabId = 'overview' | 'targets' | 'compose' | 'operations';
+type TabId = 'overview' | 'targets' | 'monitor' | 'compose' | 'operations';
 
 export function ItemView() {
   const id = useIdParam('id');
@@ -71,6 +72,7 @@ export function ItemView() {
           options={[
             { id: 'overview', label: 'Overview' },
             { id: 'targets', label: 'Targets' },
+            { id: 'monitor', label: 'Monitor' },
             { id: 'compose', label: 'Compose' },
             { id: 'operations', label: 'Operations' },
           ]}
@@ -79,6 +81,7 @@ export function ItemView() {
         />
         {selectedTab === 'overview' && <OverviewTab instance={instance} />}
         {selectedTab === 'targets' && <TargetsTab instance={instance} />}
+        {selectedTab === 'monitor' && <MonitorTab instance={instance} />}
         {selectedTab === 'compose' && <ComposeTab instance={instance} />}
         {selectedTab === 'operations' && <OperationsTab instance={instance} />}
       </div>

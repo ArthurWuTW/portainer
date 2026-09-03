@@ -69,6 +69,7 @@ describe('Service Instance ItemView', () => {
       screen.getByRole('button', { name: 'Overview' })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Targets' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Monitor' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Compose' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Operations' })
@@ -116,6 +117,42 @@ describe('Service Instance ItemView', () => {
       screen.getByText(/Env #2: failed \(image pull failed\)/)
     ).toBeInTheDocument();
     expect(screen.getByText(/Env #3: skipped/)).toBeInTheDocument();
+  });
+
+  it('displays the auto-refreshing monitor of target environments', async () => {
+    renderComponent();
+
+    await screen.findByRole('heading', { name: 'production-web' });
+    await userEvent.click(screen.getByRole('button', { name: 'Monitor' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Monitor' })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText('Auto-refreshes every 0.5 seconds')
+    ).toBeInTheDocument();
+    expect(screen.getByText('prod-a')).toBeInTheDocument();
+    expect(screen.getByText('prod-b')).toBeInTheDocument();
+    expect(
+      screen.getAllByText('si-1-production-web').length
+    ).toBeGreaterThanOrEqual(1);
+  });
+
+  it('toggles auto-refresh via the monitor switch', async () => {
+    renderComponent();
+
+    await screen.findByRole('heading', { name: 'production-web' });
+    await userEvent.click(screen.getByRole('button', { name: 'Monitor' }));
+
+    expect(
+      await screen.findByText('Auto-refreshes every 0.5 seconds')
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'Auto-refresh' })
+    );
+
+    expect(screen.getByText('Auto-refresh disabled')).toBeInTheDocument();
   });
 
   it('displays missing targets in the targets tab', async () => {
