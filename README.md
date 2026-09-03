@@ -2,7 +2,7 @@
   <img title="portainer" src='https://github.com/portainer/portainer/blob/develop/app/assets/images/portainer-github-banner.png?raw=true' />
 </p>
 
-**Portainer Community Edition** is a lightweight service delivery platform for containerized applications that can be used to manage Docker, Swarm, Kubernetes and ACI environments. It is designed to be as simple to deploy as it is to use. The application allows you to manage all your orchestrator resources (containers, images, volumes, networks and more) through a ‘smart’ GUI and/or an extensive API.
+**Portainer Community Edition** is a lightweight service delivery platform for containerized applications that can be used to manage Docker, Swarm, Kubernetes and ACI environments. It is designed to be as simple to deploy as it is to use. The application allows you to manage all your orchestrator resources (containers, images, volumes, networks and more) through a 'smart' GUI and/or an extensive API.
 
 Portainer consists of a single container that can run on any cluster. It can be deployed as a Linux container or a Windows native container.
 
@@ -11,6 +11,29 @@ Portainer consists of a single container that can run on any cluster. It can be 
 - [Compare Portainer CE and Compare Portainer BE](https://www.portainer.io/features)
 - [Take3 – get 3 free nodes of Portainer Business for as long as you want them](https://www.portainer.io/take-3)
 - [Portainer BE install guide](https://academy.portainer.io/install/)
+
+## Service Instances
+
+**Service Instances** let you define a service once and roll it out to many environments in a single operation. A Service Instance is a logical orchestration object that groups a set of target environments (an endpoint group or a list of individual environments) and deploys a shared Compose definition to all of them.
+
+### Capabilities
+
+- **Define a service** — name, description, Compose file, and environment variables.
+- **Multi-target deployment** — target an entire endpoint group or a hand-picked set of environments.
+- **Full lifecycle control** — deploy, start, stop, redeploy, and refresh with a single action. Operations run asynchronously and are tracked end to end.
+- **Per-target visibility** — every target reports its own status; the instance shows an aggregated status (running, partial, failed, etc.).
+- **Operation history** — a full audit trail of every operation with per-target results and errors.
+- **Live monitoring** — a Monitor tab that auto-refreshes target status every 3 seconds (toggleable).
+- **Scheduled builds** — schedule a deploy for a future time. Images are pulled on all targets immediately so the deploy is fast and reliable when the time comes. List and cancel pending scheduled builds.
+
+### How it works
+
+1. Create a Service Instance with a Compose file and choose its targets.
+2. Trigger a lifecycle operation (deploy, start, stop, redeploy, or refresh).
+3. Portainer resolves the target snapshot, runs the operation sequentially with fail-fast semantics, and persists per-target results as it goes.
+4. Watch progress in the UI — the instance status, per-target results, and operation history update in real time.
+
+Service Instances are available in the sidebar under **Service Instances** and are fully exposed through the REST API (`/api/service-instances`, `/api/service-instance-operations`, and scheduled-build endpoints).
 
 ## Latest Version
 
