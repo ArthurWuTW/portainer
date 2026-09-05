@@ -29,7 +29,7 @@ export function OverviewTab({ instance }: Props) {
     .join(', ');
 
   const targetLabel = isGroupTarget
-    ? groupQuery.data?.Name ?? `Group #${instance.GroupId}`
+    ? (groupQuery.data?.Name ?? `Group #${instance.GroupId}`)
     : environmentIds.length > 0 && !environmentsQuery.isLoading
       ? environmentNames
       : `${environmentIds.length} environments`;

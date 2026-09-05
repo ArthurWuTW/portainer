@@ -96,6 +96,7 @@ export interface ServiceInstance {
   CreatedBy: string;
   CreatedAt: number;
   UpdatedAt: number;
+  LatestScheduledBuild?: ServiceInstanceScheduledBuild;
 }
 
 export interface ServiceInstanceTargetResult {

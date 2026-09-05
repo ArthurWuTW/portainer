@@ -1379,7 +1379,48 @@ export const zPortainerServiceInstanceOperationType = z.union([
   z.literal(3),
   z.literal(4),
   z.literal(5),
+  z.literal(6),
 ]);
+
+export const zPortainerServiceInstanceScheduledBuildStatus = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+]);
+
+export const zPortainerServiceInstanceScheduledBuildTargetStatus = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+  z.literal(7),
+]);
+
+export const zPortainerServiceInstanceScheduledBuildTargetResult = z.object({
+  EnvironmentId: z.int().optional(),
+  Error: z.string().optional(),
+  Status: zPortainerServiceInstanceScheduledBuildTargetStatus.optional(),
+});
+
+export const zPortainerServiceInstanceScheduledBuild = z.object({
+  ComposeFile: z.string().optional(),
+  CreatedAt: z.int().optional(),
+  DeployAt: z.int().optional(),
+  Error: z.string().optional(),
+  FinishedAt: z.int().optional(),
+  Id: z.int().optional(),
+  Results: z
+    .array(zPortainerServiceInstanceScheduledBuildTargetResult)
+    .optional(),
+  ServiceInstanceId: z.int().optional(),
+  Status: zPortainerServiceInstanceScheduledBuildStatus.optional(),
+  UserId: z.int().optional(),
+});
 
 export const zPortainerServiceInstanceStatus = z.union([
   z.literal(0),
@@ -2191,6 +2232,28 @@ export const zServiceinstancesCreateServiceInstancePayload = z.object({
   GroupId: z.int().optional(),
   Name: z.string(),
   TargetType: zPortainerServiceInstanceTargetType,
+});
+
+export const zServiceinstancesDecoratedServiceInstance = z.object({
+  ComposeFile: z.string().optional(),
+  CreatedAt: z.int().optional(),
+  CreatedBy: z.string().optional(),
+  Description: z.string().optional(),
+  Env: z.array(zPortainerPair).optional(),
+  EnvironmentIds: z.array(z.int()).optional(),
+  GroupId: z.int().optional(),
+  Id: z.int().optional(),
+  LatestScheduledBuild: zPortainerServiceInstanceScheduledBuild.optional(),
+  Name: z.string().optional(),
+  StackName: z.string().optional(),
+  Status: zPortainerServiceInstanceStatus.optional(),
+  TargetType: zPortainerServiceInstanceTargetType.optional(),
+  UpdatedAt: z.int().optional(),
+});
+
+export const zServiceinstancesScheduleServiceInstanceBuildPayload = z.object({
+  ComposeFile: z.string(),
+  DeployAt: z.int(),
 });
 
 export const zServiceinstancesUpdateServiceInstancePayload = z.object({
@@ -7239,10 +7302,21 @@ export const zServiceInstanceOperationInspectPath = z.object({
 export const zServiceInstanceOperationInspectResponse =
   zPortainerServiceInstanceOperation;
 
+export const zServiceInstanceScheduledBuildCancelPath = z.object({
+  id: z.int(),
+});
+
 /**
  * Success
  */
-export const zServiceInstanceListResponse = z.array(zPortainerServiceInstance);
+export const zServiceInstanceScheduledBuildCancelResponse = z.void();
+
+/**
+ * Success
+ */
+export const zServiceInstanceListResponse = z.array(
+  zServiceinstancesDecoratedServiceInstance
+);
 
 /**
  * Service instance configuration
@@ -7327,6 +7401,43 @@ export const zServiceInstanceRefreshPath = z.object({
  * Success
  */
 export const zServiceInstanceRefreshResponse = zPortainerServiceInstance;
+
+export const zServiceInstanceRestartPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Operation started
+ */
+export const zServiceInstanceRestartResponse =
+  zPortainerServiceInstanceOperation;
+
+/**
+ * Scheduled build configuration
+ */
+export const zServiceInstanceScheduleBuildBody =
+  zServiceinstancesScheduleServiceInstanceBuildPayload;
+
+export const zServiceInstanceScheduleBuildPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Scheduled build created
+ */
+export const zServiceInstanceScheduleBuildResponse =
+  zPortainerServiceInstanceScheduledBuild;
+
+export const zServiceInstanceScheduledBuildsPath = z.object({
+  id: z.int(),
+});
+
+/**
+ * Success
+ */
+export const zServiceInstanceScheduledBuildsResponse = z.array(
+  zPortainerServiceInstanceScheduledBuild
+);
 
 export const zServiceInstanceStartPath = z.object({
   id: z.int(),

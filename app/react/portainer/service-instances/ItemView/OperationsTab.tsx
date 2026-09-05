@@ -1,3 +1,5 @@
+import { useEnvironment } from '@/react/portainer/environments/queries';
+
 import { Badge } from '@@/Badge';
 import { DetailsTable } from '@@/DetailsTable';
 import { Widget } from '@@/Widget';
@@ -6,6 +8,7 @@ import {
   ServiceInstance,
   ServiceInstanceOperationStatuses,
   ServiceInstanceOperationTypes,
+  ServiceInstanceTargetResult,
   ServiceInstanceTargetStatuses,
 } from '../types';
 import { useServiceInstanceOperations } from '../queries/useServiceInstanceOperations';
@@ -52,6 +55,28 @@ const operationStatusBadge: Record<
     label: 'Cancelled',
   },
 };
+
+function OperationResult({ result }: { result: ServiceInstanceTargetResult }) {
+  const environmentQuery = useEnvironment(
+    result.EnvironmentId,
+    (environment) => environment.Name
+  );
+  const environmentName =
+    environmentQuery.data ?? `Env #${result.EnvironmentId}`;
+
+  return (
+    <div>
+      {environmentName}:{' '}
+      {result.Status === ServiceInstanceTargetStatuses.SUCCESS
+        ? 'success'
+        : result.Status === ServiceInstanceTargetStatuses.FAILED
+          ? `failed${result.Error ? ` (${result.Error})` : ''}`
+          : result.Status === ServiceInstanceTargetStatuses.SKIPPED
+            ? 'skipped'
+            : `status ${result.Status}`}
+    </div>
+  );
+}
 
 export function OperationsTab({ instance }: Props) {
   const operationsQuery = useServiceInstanceOperations(instance.Id);
@@ -112,17 +137,10 @@ export function OperationsTab({ instance }: Props) {
                 </td>
                 <td>
                   {op.Results.map((result) => (
-                    <div key={result.EnvironmentId}>
-                      Env #{result.EnvironmentId}:{' '}
-                      {result.Status === ServiceInstanceTargetStatuses.SUCCESS
-                        ? 'success'
-                        : result.Status === ServiceInstanceTargetStatuses.FAILED
-                          ? `failed${result.Error ? ` (${result.Error})` : ''}`
-                          : result.Status ===
-                              ServiceInstanceTargetStatuses.SKIPPED
-                            ? 'skipped'
-                            : `status ${result.Status}`}
-                    </div>
+                    <OperationResult
+                      key={result.EnvironmentId}
+                      result={result}
+                    />
                   ))}
                 </td>
               </tr>

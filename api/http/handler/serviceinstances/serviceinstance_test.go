@@ -138,6 +138,49 @@ func TestServiceInstanceList(t *testing.T) {
 	assert.Equal(t, "list-test", instances[0].Name)
 }
 
+func TestServiceInstanceList_IncludesLatestScheduledBuild(t *testing.T) {
+	h, store, _ := newTestHandler(t)
+
+	instance := &portainer.ServiceInstance{
+		Name:       "list-build-test",
+		TargetType: portainer.ServiceInstanceTargetEnvironments,
+	}
+	require.NoError(t, store.ServiceInstance().Create(instance))
+
+	olderBuild := &portainer.ServiceInstanceScheduledBuild{
+		ServiceInstanceID: instance.ID,
+		ComposeFile:       "services:\n  web:\n    image: nginx:latest",
+		DeployAt:          time.Now().Add(time.Hour).Unix(),
+		Status:            portainer.ServiceInstanceScheduledBuildStatusDeployed,
+	}
+	require.NoError(t, store.ServiceInstanceScheduledBuild().Create(olderBuild))
+
+	latestBuild := &portainer.ServiceInstanceScheduledBuild{
+		ServiceInstanceID: instance.ID,
+		ComposeFile:       "services:\n  web:\n    image: nginx:latest",
+		DeployAt:          time.Now().Add(2 * time.Hour).Unix(),
+		Status:            portainer.ServiceInstanceScheduledBuildStatusPending,
+	}
+	require.NoError(t, store.ServiceInstanceScheduledBuild().Create(latestBuild))
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, newRequestWithSecurityContext(http.MethodGet, "/service-instances", nil))
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var instances []struct {
+		portainer.ServiceInstance
+		LatestScheduledBuild *portainer.ServiceInstanceScheduledBuild `json:"LatestScheduledBuild,omitempty"`
+	}
+	err := json.Unmarshal(w.Body.Bytes(), &instances)
+	require.NoError(t, err)
+	require.Len(t, instances, 1)
+	require.NotNil(t, instances[0].LatestScheduledBuild)
+	assert.Equal(t, latestBuild.ID, instances[0].LatestScheduledBuild.ID)
+	assert.Equal(t, latestBuild.DeployAt, instances[0].LatestScheduledBuild.DeployAt)
+	assert.Equal(t, portainer.ServiceInstanceScheduledBuildStatusPending, instances[0].LatestScheduledBuild.Status)
+}
+
 func TestServiceInstanceInspect(t *testing.T) {
 	h, store, _ := newTestHandler(t)
 

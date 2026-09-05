@@ -112,11 +112,10 @@ function ScheduledBuildTargetResult({
     result.EnvironmentId,
     (environment) => environment.Name
   );
-  const targetStatus =
-    targetStatusBadge[result.Status] ?? {
-      type: 'muted' as const,
-      label: 'Unknown',
-    };
+  const targetStatus = targetStatusBadge[result.Status] ?? {
+    type: 'muted' as const,
+    label: 'Unknown',
+  };
   const environmentName =
     environmentQuery.data ?? `Env #${result.EnvironmentId}`;
 
@@ -140,7 +139,9 @@ export function DeployTab({ instance }: Props) {
   const cancelMutation = useCancelServiceInstanceScheduledBuild();
   const scheduledBuildsQuery = useServiceInstanceScheduledBuilds(instance.Id);
 
-  const builds = (scheduledBuildsQuery.data ?? []).slice().sort((a, b) => b.Id - a.Id);
+  const builds = (scheduledBuildsQuery.data ?? [])
+    .slice()
+    .sort((a, b) => b.Id - a.Id);
   const hasActiveBuild = builds.some(isCancellable);
 
   // When a scheduled build finishes, refresh the instance so the Compose tab
@@ -148,9 +149,7 @@ export function DeployTab({ instance }: Props) {
   const prevHasActiveBuild = useRef(hasActiveBuild);
   useEffect(() => {
     if (prevHasActiveBuild.current && !hasActiveBuild) {
-      queryClient.invalidateQueries(
-        serviceInstanceQueryKeys.item(instance.Id)
-      );
+      queryClient.invalidateQueries(serviceInstanceQueryKeys.item(instance.Id));
     }
     prevHasActiveBuild.current = hasActiveBuild;
   }, [hasActiveBuild, instance.Id, queryClient]);
@@ -232,7 +231,14 @@ export function DeployTab({ instance }: Props) {
         <Widget.Body>
           <DetailsTable
             dataCy="service-instance-scheduled-builds"
-            headers={['ID', 'Deploy at', 'Status', 'Targets', 'Error', 'Actions']}
+            headers={[
+              'ID',
+              'Deploy at',
+              'Status',
+              'Targets',
+              'Error',
+              'Actions',
+            ]}
             emptyMessage="No scheduled builds"
           >
             {builds.map((build) => {
@@ -250,15 +256,15 @@ export function DeployTab({ instance }: Props) {
                   <td>
                     <Badge type={status.type}>{status.label}</Badge>
                   </td>
-                    <td>
-                      {(build.Results ?? []).map((result) => (
-                        <ScheduledBuildTargetResult
-                          key={result.EnvironmentId}
-                          buildId={build.Id}
-                          result={result}
-                        />
-                      ))}
-                    </td>
+                  <td>
+                    {(build.Results ?? []).map((result) => (
+                      <ScheduledBuildTargetResult
+                        key={result.EnvironmentId}
+                        buildId={build.Id}
+                        result={result}
+                      />
+                    ))}
+                  </td>
                   <td>{build.Error || '-'}</td>
                   <td>
                     {isCancellable(build) && (

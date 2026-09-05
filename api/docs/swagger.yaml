@@ -4711,6 +4711,7 @@ definitions:
     - 3
     - 4
     - 5
+    - 6
     type: integer
     x-enum-varnames:
     - ServiceInstanceOperationDeploy
@@ -4718,6 +4719,100 @@ definitions:
     - ServiceInstanceOperationStop
     - ServiceInstanceOperationRedeploy
     - ServiceInstanceOperationRefresh
+    - ServiceInstanceOperationRestart
+  portainer.ServiceInstanceScheduledBuild:
+    properties:
+      ComposeFile:
+        description: ComposeFile is the compose definition to deploy at the scheduled
+          time
+        type: string
+      CreatedAt:
+        description: The date in unix time when the scheduled build was created
+        example: 1587399600
+        type: integer
+      DeployAt:
+        description: DeployAt is the unix timestamp when the compose should be deployed
+        example: 1587399600
+        type: integer
+      Error:
+        description: Error message if the scheduled build failed
+        type: string
+      FinishedAt:
+        description: The date in unix time when the scheduled build finished
+        type: integer
+      Id:
+        description: Scheduled build identifier
+        example: 1
+        type: integer
+      Results:
+        description: Per-target results of the scheduled build
+        items:
+          $ref: '#/definitions/portainer.ServiceInstanceScheduledBuildTargetResult'
+        type: array
+      ServiceInstanceId:
+        description: ServiceInstanceID is the service instance this scheduled build
+          belongs to
+        example: 1
+        type: integer
+      Status:
+        allOf:
+        - $ref: '#/definitions/portainer.ServiceInstanceScheduledBuildStatus'
+        description: Status of the scheduled build
+        example: 1
+      UserId:
+        description: UserID of the user who scheduled the build
+        example: 1
+        type: integer
+    type: object
+  portainer.ServiceInstanceScheduledBuildStatus:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    type: integer
+    x-enum-varnames:
+    - ServiceInstanceScheduledBuildStatusPending
+    - ServiceInstanceScheduledBuildStatusPulling
+    - ServiceInstanceScheduledBuildStatusDeployed
+    - ServiceInstanceScheduledBuildStatusFailed
+    - ServiceInstanceScheduledBuildStatusCancelled
+    - ServiceInstanceScheduledBuildStatusImageReady
+  portainer.ServiceInstanceScheduledBuildTargetResult:
+    properties:
+      EnvironmentId:
+        description: Environment(endpoint) identifier
+        example: 1
+        type: integer
+      Error:
+        description: Error message if the scheduled build failed on this target
+        type: string
+      Status:
+        allOf:
+        - $ref: '#/definitions/portainer.ServiceInstanceScheduledBuildTargetStatus'
+        description: Status of the scheduled build on this target
+        example: 3
+    type: object
+  portainer.ServiceInstanceScheduledBuildTargetStatus:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    type: integer
+    x-enum-varnames:
+    - ServiceInstanceScheduledBuildTargetStatusPending
+    - ServiceInstanceScheduledBuildTargetStatusPulling
+    - ServiceInstanceScheduledBuildTargetStatusImageReady
+    - ServiceInstanceScheduledBuildTargetStatusDeployed
+    - ServiceInstanceScheduledBuildTargetStatusFailed
+    - ServiceInstanceScheduledBuildTargetStatusSkipped
+    - ServiceInstanceScheduledBuildTargetStatusCancelled
   portainer.ServiceInstanceStatus:
     enum:
     - 0
@@ -6197,6 +6292,79 @@ definitions:
     - ComposeFile
     - Name
     - TargetType
+    type: object
+  serviceinstances.decoratedServiceInstance:
+    properties:
+      ComposeFile:
+        description: ComposeFile is the desired compose definition
+        type: string
+      CreatedAt:
+        description: The date in unix time when the service instance was created
+        example: 1587399600
+        type: integer
+      CreatedBy:
+        description: The username which created this service instance
+        example: admin
+        type: string
+      Description:
+        description: Description associated to the service instance
+        example: production web service
+        type: string
+      Env:
+        description: A list of environment variables used during stack deployment
+        items:
+          $ref: '#/definitions/portainer.Pair'
+        type: array
+      EnvironmentIds:
+        description: EnvironmentIDs is the list of environment(endpoint) IDs used
+          as targets when TargetType is ENVIRONMENTS
+        items:
+          type: integer
+        type: array
+      GroupId:
+        description: GroupID is the environment group used as target when TargetType
+          is GROUP
+        type: integer
+      Id:
+        description: Service Instance Identifier
+        example: 1
+        type: integer
+      LatestScheduledBuild:
+        $ref: '#/definitions/portainer.ServiceInstanceScheduledBuild'
+      Name:
+        description: Service Instance name
+        example: production-web
+        type: string
+      StackName:
+        description: StackName is the deterministic stack name deployed on each target
+          environment
+        example: si-102-production-web
+        type: string
+      Status:
+        allOf:
+        - $ref: '#/definitions/portainer.ServiceInstanceStatus'
+        description: Aggregated status of the service instance
+        example: 2
+      TargetType:
+        allOf:
+        - $ref: '#/definitions/portainer.ServiceInstanceTargetType'
+        description: TargetType determines how the deployment targets are resolved
+          (group or explicit environments)
+        example: 1
+      UpdatedAt:
+        description: The date in unix time when the service instance was last updated
+        example: 1587399600
+        type: integer
+    type: object
+  serviceinstances.scheduleServiceInstanceBuildPayload:
+    properties:
+      ComposeFile:
+        type: string
+      DeployAt:
+        type: integer
+    required:
+    - ComposeFile
+    - DeployAt
     type: object
   serviceinstances.updateServiceInstancePayload:
     properties:
@@ -24066,6 +24234,33 @@ paths:
       summary: Inspect a service instance operation
       tags:
       - service_instances
+  /service-instance-scheduled-builds/{id}:
+    delete:
+      description: |-
+        Cancels a scheduled build that is still pending or pulling.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceScheduledBuildCancel
+      parameters:
+      - description: Scheduled build identifier
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Success
+        "400":
+          description: Invalid request
+        "404":
+          description: Scheduled build not found
+        "500":
+          description: Server error
+      security:
+      - ApiKeyAuth: []
+      - jwt: []
+      summary: Cancel a service instance scheduled build
+      tags:
+      - service_instances
   /service-instances:
     get:
       description: |-
@@ -24077,7 +24272,7 @@ paths:
           description: Success
           schema:
             items:
-              $ref: '#/definitions/portainer.ServiceInstance'
+              $ref: '#/definitions/serviceinstances.decoratedServiceInstance'
             type: array
         "500":
           description: Server error
@@ -24341,6 +24536,113 @@ paths:
       - ApiKeyAuth: []
       - jwt: []
       summary: Refresh the status of a service instance
+      tags:
+      - service_instances
+  /service-instances/{id}/restart:
+    post:
+      description: |-
+        Starts an asynchronous restart operation against all target environments.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceRestart
+      parameters:
+      - description: Service instance identifier
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "202":
+          description: Operation started
+          schema:
+            $ref: '#/definitions/portainer.ServiceInstanceOperation'
+        "400":
+          description: Invalid request
+        "403":
+          description: Permission denied
+        "404":
+          description: Service instance not found
+        "409":
+          description: Operation already in progress
+        "500":
+          description: Server error
+      security:
+      - ApiKeyAuth: []
+      - jwt: []
+      summary: Restart a service instance
+      tags:
+      - service_instances
+  /service-instances/{id}/schedule-build:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Pulls the images referenced by the provided compose file on all
+        target environments immediately, then deploys the compose file
+        at the given timestamp.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceScheduleBuild
+      parameters:
+      - description: Service instance identifier
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Scheduled build configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/serviceinstances.scheduleServiceInstanceBuildPayload'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Scheduled build created
+          schema:
+            $ref: '#/definitions/portainer.ServiceInstanceScheduledBuild'
+        "400":
+          description: Invalid request
+        "403":
+          description: Permission denied
+        "404":
+          description: Service instance not found
+        "500":
+          description: Server error
+      security:
+      - ApiKeyAuth: []
+      - jwt: []
+      summary: Schedule a build for a service instance
+      tags:
+      - service_instances
+  /service-instances/{id}/scheduled-builds:
+    get:
+      description: |-
+        Returns all scheduled builds for the given service instance.
+        **Access policy**: authenticated
+      operationId: ServiceInstanceScheduledBuilds
+      parameters:
+      - description: Service instance identifier
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Success
+          schema:
+            items:
+              $ref: '#/definitions/portainer.ServiceInstanceScheduledBuild'
+            type: array
+        "400":
+          description: Invalid request
+        "404":
+          description: Service instance not found
+        "500":
+          description: Server error
+      security:
+      - ApiKeyAuth: []
+      - jwt: []
+      summary: List scheduled builds for a service instance
       tags:
       - service_instances
   /service-instances/{id}/start:

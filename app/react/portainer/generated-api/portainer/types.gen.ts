@@ -3465,10 +3465,136 @@ export const PortainerServiceInstanceOperationType = {
    * ServiceInstanceOperationRefresh
    */
   SERVICE_INSTANCE_OPERATION_REFRESH: 5,
+  /**
+   * ServiceInstanceOperationRestart
+   */
+  SERVICE_INSTANCE_OPERATION_RESTART: 6,
 } as const;
 
 export type PortainerServiceInstanceOperationType =
   (typeof PortainerServiceInstanceOperationType)[keyof typeof PortainerServiceInstanceOperationType];
+
+export type PortainerServiceInstanceScheduledBuild = {
+  /**
+   * ComposeFile is the compose definition to deploy at the scheduled time
+   */
+  ComposeFile?: string;
+  /**
+   * The date in unix time when the scheduled build was created
+   */
+  CreatedAt?: number;
+  /**
+   * DeployAt is the unix timestamp when the compose should be deployed
+   */
+  DeployAt?: number;
+  /**
+   * Error message if the scheduled build failed
+   */
+  Error?: string;
+  /**
+   * The date in unix time when the scheduled build finished
+   */
+  FinishedAt?: number;
+  /**
+   * Scheduled build identifier
+   */
+  Id?: number;
+  /**
+   * Per-target results of the scheduled build
+   */
+  Results?: Array<PortainerServiceInstanceScheduledBuildTargetResult>;
+  /**
+   * ServiceInstanceID is the service instance this scheduled build belongs to
+   */
+  ServiceInstanceId?: number;
+  /**
+   * Status of the scheduled build
+   */
+  Status?: PortainerServiceInstanceScheduledBuildStatus;
+  /**
+   * UserID of the user who scheduled the build
+   */
+  UserId?: number;
+};
+
+export const PortainerServiceInstanceScheduledBuildStatus = {
+  /**
+   * ServiceInstanceScheduledBuildStatusPending
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_STATUS_PENDING: 1,
+  /**
+   * ServiceInstanceScheduledBuildStatusPulling
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_STATUS_PULLING: 2,
+  /**
+   * ServiceInstanceScheduledBuildStatusDeployed
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_STATUS_DEPLOYED: 3,
+  /**
+   * ServiceInstanceScheduledBuildStatusFailed
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_STATUS_FAILED: 4,
+  /**
+   * ServiceInstanceScheduledBuildStatusCancelled
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_STATUS_CANCELLED: 5,
+  /**
+   * ServiceInstanceScheduledBuildStatusImageReady
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_STATUS_IMAGE_READY: 6,
+} as const;
+
+export type PortainerServiceInstanceScheduledBuildStatus =
+  (typeof PortainerServiceInstanceScheduledBuildStatus)[keyof typeof PortainerServiceInstanceScheduledBuildStatus];
+
+export type PortainerServiceInstanceScheduledBuildTargetResult = {
+  /**
+   * Environment(endpoint) identifier
+   */
+  EnvironmentId?: number;
+  /**
+   * Error message if the scheduled build failed on this target
+   */
+  Error?: string;
+  /**
+   * Status of the scheduled build on this target
+   */
+  Status?: PortainerServiceInstanceScheduledBuildTargetStatus;
+};
+
+export const PortainerServiceInstanceScheduledBuildTargetStatus = {
+  /**
+   * ServiceInstanceScheduledBuildTargetStatusPending
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_TARGET_STATUS_PENDING: 1,
+  /**
+   * ServiceInstanceScheduledBuildTargetStatusPulling
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_TARGET_STATUS_PULLING: 2,
+  /**
+   * ServiceInstanceScheduledBuildTargetStatusImageReady
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_TARGET_STATUS_IMAGE_READY: 3,
+  /**
+   * ServiceInstanceScheduledBuildTargetStatusDeployed
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_TARGET_STATUS_DEPLOYED: 4,
+  /**
+   * ServiceInstanceScheduledBuildTargetStatusFailed
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_TARGET_STATUS_FAILED: 5,
+  /**
+   * ServiceInstanceScheduledBuildTargetStatusSkipped
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_TARGET_STATUS_SKIPPED: 6,
+  /**
+   * ServiceInstanceScheduledBuildTargetStatusCancelled
+   */
+  SERVICE_INSTANCE_SCHEDULED_BUILD_TARGET_STATUS_CANCELLED: 7,
+} as const;
+
+export type PortainerServiceInstanceScheduledBuildTargetStatus =
+  (typeof PortainerServiceInstanceScheduledBuildTargetStatus)[keyof typeof PortainerServiceInstanceScheduledBuildTargetStatus];
 
 export const PortainerServiceInstanceStatus = {
   /**
@@ -4838,6 +4964,67 @@ export type ServiceinstancesCreateServiceInstancePayload = {
   GroupId?: number;
   Name: string;
   TargetType: PortainerServiceInstanceTargetType;
+};
+
+export type ServiceinstancesDecoratedServiceInstance = {
+  /**
+   * ComposeFile is the desired compose definition
+   */
+  ComposeFile?: string;
+  /**
+   * The date in unix time when the service instance was created
+   */
+  CreatedAt?: number;
+  /**
+   * The username which created this service instance
+   */
+  CreatedBy?: string;
+  /**
+   * Description associated to the service instance
+   */
+  Description?: string;
+  /**
+   * A list of environment variables used during stack deployment
+   */
+  Env?: Array<PortainerPair>;
+  /**
+   * EnvironmentIDs is the list of environment(endpoint) IDs used as targets when TargetType is ENVIRONMENTS
+   */
+  EnvironmentIds?: Array<number>;
+  /**
+   * GroupID is the environment group used as target when TargetType is GROUP
+   */
+  GroupId?: number;
+  /**
+   * Service Instance Identifier
+   */
+  Id?: number;
+  LatestScheduledBuild?: PortainerServiceInstanceScheduledBuild;
+  /**
+   * Service Instance name
+   */
+  Name?: string;
+  /**
+   * StackName is the deterministic stack name deployed on each target environment
+   */
+  StackName?: string;
+  /**
+   * Aggregated status of the service instance
+   */
+  Status?: PortainerServiceInstanceStatus;
+  /**
+   * TargetType determines how the deployment targets are resolved (group or explicit environments)
+   */
+  TargetType?: PortainerServiceInstanceTargetType;
+  /**
+   * The date in unix time when the service instance was last updated
+   */
+  UpdatedAt?: number;
+};
+
+export type ServiceinstancesScheduleServiceInstanceBuildPayload = {
+  ComposeFile: string;
+  DeployAt: number;
 };
 
 export type ServiceinstancesUpdateServiceInstancePayload = {
@@ -22885,6 +23072,43 @@ export type ServiceInstanceOperationInspectResponses = {
 export type ServiceInstanceOperationInspectResponse =
   ServiceInstanceOperationInspectResponses[keyof ServiceInstanceOperationInspectResponses];
 
+export type ServiceInstanceScheduledBuildCancelData = {
+  body?: never;
+  path: {
+    /**
+     * Scheduled build identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instance-scheduled-builds/{id}';
+};
+
+export type ServiceInstanceScheduledBuildCancelErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Scheduled build not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceScheduledBuildCancelResponses = {
+  /**
+   * Success
+   */
+  204: void;
+};
+
+export type ServiceInstanceScheduledBuildCancelResponse =
+  ServiceInstanceScheduledBuildCancelResponses[keyof ServiceInstanceScheduledBuildCancelResponses];
+
 export type ServiceInstanceListData = {
   body?: never;
   path?: never;
@@ -22903,7 +23127,7 @@ export type ServiceInstanceListResponses = {
   /**
    * Success
    */
-  200: Array<PortainerServiceInstance>;
+  200: Array<ServiceinstancesDecoratedServiceInstance>;
 };
 
 export type ServiceInstanceListResponse =
@@ -23225,6 +23449,132 @@ export type ServiceInstanceRefreshResponses = {
 
 export type ServiceInstanceRefreshResponse =
   ServiceInstanceRefreshResponses[keyof ServiceInstanceRefreshResponses];
+
+export type ServiceInstanceRestartData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/restart';
+};
+
+export type ServiceInstanceRestartErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Permission denied
+   */
+  403: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Operation already in progress
+   */
+  409: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceRestartResponses = {
+  /**
+   * Operation started
+   */
+  202: PortainerServiceInstanceOperation;
+};
+
+export type ServiceInstanceRestartResponse =
+  ServiceInstanceRestartResponses[keyof ServiceInstanceRestartResponses];
+
+export type ServiceInstanceScheduleBuildData = {
+  /**
+   * Scheduled build configuration
+   */
+  body: ServiceinstancesScheduleServiceInstanceBuildPayload;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/schedule-build';
+};
+
+export type ServiceInstanceScheduleBuildErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Permission denied
+   */
+  403: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceScheduleBuildResponses = {
+  /**
+   * Scheduled build created
+   */
+  202: PortainerServiceInstanceScheduledBuild;
+};
+
+export type ServiceInstanceScheduleBuildResponse =
+  ServiceInstanceScheduleBuildResponses[keyof ServiceInstanceScheduleBuildResponses];
+
+export type ServiceInstanceScheduledBuildsData = {
+  body?: never;
+  path: {
+    /**
+     * Service instance identifier
+     */
+    id: number;
+  };
+  query?: never;
+  url: '/service-instances/{id}/scheduled-builds';
+};
+
+export type ServiceInstanceScheduledBuildsErrors = {
+  /**
+   * Invalid request
+   */
+  400: unknown;
+  /**
+   * Service instance not found
+   */
+  404: unknown;
+  /**
+   * Server error
+   */
+  500: unknown;
+};
+
+export type ServiceInstanceScheduledBuildsResponses = {
+  /**
+   * Success
+   */
+  200: Array<PortainerServiceInstanceScheduledBuild>;
+};
+
+export type ServiceInstanceScheduledBuildsResponse =
+  ServiceInstanceScheduledBuildsResponses[keyof ServiceInstanceScheduledBuildsResponses];
 
 export type ServiceInstanceStartData = {
   body?: never;

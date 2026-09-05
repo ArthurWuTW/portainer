@@ -665,6 +665,18 @@ import type {
   ServiceInstanceRefreshData,
   ServiceInstanceRefreshErrors,
   ServiceInstanceRefreshResponses,
+  ServiceInstanceRestartData,
+  ServiceInstanceRestartErrors,
+  ServiceInstanceRestartResponses,
+  ServiceInstanceScheduleBuildData,
+  ServiceInstanceScheduleBuildErrors,
+  ServiceInstanceScheduleBuildResponses,
+  ServiceInstanceScheduledBuildCancelData,
+  ServiceInstanceScheduledBuildCancelErrors,
+  ServiceInstanceScheduledBuildCancelResponses,
+  ServiceInstanceScheduledBuildsData,
+  ServiceInstanceScheduledBuildsErrors,
+  ServiceInstanceScheduledBuildsResponses,
   ServiceInstanceStartData,
   ServiceInstanceStartErrors,
   ServiceInstanceStartResponses,
@@ -1396,6 +1408,15 @@ import {
   zServiceInstanceRedeployResponse,
   zServiceInstanceRefreshPath,
   zServiceInstanceRefreshResponse,
+  zServiceInstanceRestartPath,
+  zServiceInstanceRestartResponse,
+  zServiceInstanceScheduleBuildBody,
+  zServiceInstanceScheduleBuildPath,
+  zServiceInstanceScheduleBuildResponse,
+  zServiceInstanceScheduledBuildCancelPath,
+  zServiceInstanceScheduledBuildCancelResponse,
+  zServiceInstanceScheduledBuildsPath,
+  zServiceInstanceScheduledBuildsResponse,
   zServiceInstanceStartPath,
   zServiceInstanceStartResponse,
   zServiceInstanceStopPath,
@@ -9534,6 +9555,44 @@ export const serviceInstanceOperationInspect = <
   });
 
 /**
+ * Cancel a service instance scheduled build
+ *
+ * Cancels a scheduled build that is still pending or pulling.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceScheduledBuildCancel = <
+  ThrowOnError extends boolean = true,
+>(
+  options: Options<ServiceInstanceScheduledBuildCancelData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceScheduledBuildCancelResponses,
+  ServiceInstanceScheduledBuildCancelErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    ServiceInstanceScheduledBuildCancelResponses,
+    ServiceInstanceScheduledBuildCancelErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceScheduledBuildCancelPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceScheduledBuildCancelResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instance-scheduled-builds/{id}',
+    ...options,
+  });
+
+/**
  * List service instances
  *
  * List all service instances based on the current user authorizations.
@@ -9866,6 +9925,125 @@ export const serviceInstanceRefresh = <ThrowOnError extends boolean = true>(
       { name: 'Authorization', type: 'apiKey' },
     ],
     url: '/service-instances/{id}/refresh',
+    ...options,
+  });
+
+/**
+ * Restart a service instance
+ *
+ * Starts an asynchronous restart operation against all target environments.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceRestart = <ThrowOnError extends boolean = true>(
+  options: Options<ServiceInstanceRestartData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceRestartResponses,
+  ServiceInstanceRestartErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ServiceInstanceRestartResponses,
+    ServiceInstanceRestartErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceRestartPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceRestartResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/restart',
+    ...options,
+  });
+
+/**
+ * Schedule a build for a service instance
+ *
+ * Pulls the images referenced by the provided compose file on all
+ * target environments immediately, then deploys the compose file
+ * at the given timestamp.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceScheduleBuild = <
+  ThrowOnError extends boolean = true,
+>(
+  options: Options<ServiceInstanceScheduleBuildData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceScheduleBuildResponses,
+  ServiceInstanceScheduleBuildErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ServiceInstanceScheduleBuildResponses,
+    ServiceInstanceScheduleBuildErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zServiceInstanceScheduleBuildBody,
+          path: zServiceInstanceScheduleBuildPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zServiceInstanceScheduleBuildResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/schedule-build',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * List scheduled builds for a service instance
+ *
+ * Returns all scheduled builds for the given service instance.
+ * **Access policy**: authenticated
+ */
+export const serviceInstanceScheduledBuilds = <
+  ThrowOnError extends boolean = true,
+>(
+  options: Options<ServiceInstanceScheduledBuildsData, ThrowOnError>
+): RequestResult<
+  ServiceInstanceScheduledBuildsResponses,
+  ServiceInstanceScheduledBuildsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ServiceInstanceScheduledBuildsResponses,
+    ServiceInstanceScheduledBuildsErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zServiceInstanceScheduledBuildsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) =>
+      await zServiceInstanceScheduledBuildsResponse.parseAsync(data),
+    security: [
+      { name: 'X-API-KEY', type: 'apiKey' },
+      { name: 'Authorization', type: 'apiKey' },
+    ],
+    url: '/service-instances/{id}/scheduled-builds',
     ...options,
   });
 

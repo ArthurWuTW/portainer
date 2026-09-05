@@ -29,6 +29,8 @@ describe('Service Instances ListView', () => {
     expect(await screen.findByText('production-web')).toBeInTheDocument();
     expect(screen.getByText('Running')).toBeInTheDocument();
     expect(screen.getByText('si-1-production-web')).toBeInTheDocument();
+    expect(screen.getByText('DeployAt Status')).toBeInTheDocument();
+    expect(screen.getByText('Pending')).toBeInTheDocument();
   });
 
   it('renders the empty state when no service instances exist', async () => {

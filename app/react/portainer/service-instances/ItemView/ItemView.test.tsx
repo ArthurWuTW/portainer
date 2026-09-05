@@ -107,7 +107,7 @@ describe('Service Instance ItemView', () => {
       const target = document.querySelector(
         '[data-cy="service-instance-scheduled-build-target-1-1"]'
       );
-      expect(target?.textContent).toBe('environment: Pending');
+      expect(target?.textContent).toBe('prod-a: Pending');
     });
     expect(screen.queryByText(/Env #1:/)).not.toBeInTheDocument();
   });
@@ -166,11 +166,11 @@ describe('Service Instance ItemView', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Operations' }));
 
     expect(await screen.findByText('Partial success')).toBeInTheDocument();
-    expect(screen.getByText(/Env #1: success/)).toBeInTheDocument();
+    expect(await screen.findByText(/prod-a: success/)).toBeInTheDocument();
     expect(
-      screen.getByText(/Env #2: failed \(image pull failed\)/)
+      await screen.findByText(/prod-b: failed \(image pull failed\)/)
     ).toBeInTheDocument();
-    expect(screen.getByText(/Env #3: skipped/)).toBeInTheDocument();
+    expect(await screen.findByText(/prod-c: skipped/)).toBeInTheDocument();
   });
 
   it('displays the auto-refreshing monitor of target environments', async () => {
@@ -256,6 +256,15 @@ function renderComponent(
           },
         }
       )
+    ),
+    http.get('/api/endpoints/1', () =>
+      HttpResponse.json(createMockEnvironment({ Id: 1, Name: 'prod-a' }))
+    ),
+    http.get('/api/endpoints/2', () =>
+      HttpResponse.json(createMockEnvironment({ Id: 2, Name: 'prod-b' }))
+    ),
+    http.get('/api/endpoints/3', () =>
+      HttpResponse.json(createMockEnvironment({ Id: 3, Name: 'prod-c' }))
     ),
     http.get('/api/service-instances/1/targets', () =>
       HttpResponse.json(overrides.targets ?? mockServiceInstanceTargets)

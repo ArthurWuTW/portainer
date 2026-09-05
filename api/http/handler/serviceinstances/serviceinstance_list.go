@@ -10,6 +10,13 @@ import (
 	"github.com/portainer/portainer/pkg/libhttp/response"
 )
 
+// decoratedServiceInstance is the list response for a service instance,
+// decorated with the instance's most recent scheduled build.
+type decoratedServiceInstance struct {
+	portainer.ServiceInstance
+	LatestScheduledBuild *portainer.ServiceInstanceScheduledBuild `json:"LatestScheduledBuild,omitempty"`
+}
+
 // @id ServiceInstanceList
 // @summary List service instances
 // @description List all service instances based on the current user authorizations.
@@ -17,7 +24,7 @@ import (
 // @tags service_instances
 // @security ApiKeyAuth
 // @security jwt
-// @success 200 {array} portainer.ServiceInstance "Success"
+// @success 200 {array} decoratedServiceInstance "Success"
 // @failure 500 "Server error"
 // @router /service-instances [get]
 func (handler *Handler) serviceInstanceList(w http.ResponseWriter, r *http.Request) *httperror.HandlerError {
@@ -35,7 +42,29 @@ func (handler *Handler) serviceInstanceList(w http.ResponseWriter, r *http.Reque
 		instances = filterAuthorizedServiceInstances(instances, securityContext, handler.DataStore)
 	}
 
-	return response.JSON(w, instances)
+	builds, err := handler.DataStore.ServiceInstanceScheduledBuild().ReadAll()
+	if err != nil {
+		return httperror.InternalServerError("Unable to retrieve scheduled builds", err)
+	}
+
+	latestBuildByInstance := make(map[portainer.ServiceInstanceID]*portainer.ServiceInstanceScheduledBuild, len(builds))
+	for i := range builds {
+		build := &builds[i]
+		latest, ok := latestBuildByInstance[build.ServiceInstanceID]
+		if !ok || build.ID > latest.ID {
+			latestBuildByInstance[build.ServiceInstanceID] = build
+		}
+	}
+
+	decorated := make([]decoratedServiceInstance, 0, len(instances))
+	for _, instance := range instances {
+		decorated = append(decorated, decoratedServiceInstance{
+			ServiceInstance:      instance,
+			LatestScheduledBuild: latestBuildByInstance[instance.ID],
+		})
+	}
+
+	return response.JSON(w, decorated)
 }
 
 // filterAuthorizedServiceInstances keeps only the service instances for which
