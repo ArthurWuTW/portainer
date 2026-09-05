@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { notifySuccess } from '@/portainer/services/notifications';
 import { isoDateFromTimestamp } from '@/portainer/filters/filters';
+import { useEnvironment } from '@/react/portainer/environments/queries';
 
 import { Badge } from '@@/Badge';
 import { Button } from '@@/buttons';
@@ -16,6 +17,7 @@ import {
   ServiceInstance,
   ServiceInstanceScheduledBuild,
   ServiceInstanceScheduledBuildStatuses,
+  ServiceInstanceScheduledBuildTargetResult,
   ServiceInstanceScheduledBuildTargetStatuses,
 } from '../types';
 import { useScheduleServiceInstanceBuild } from '../queries/useScheduleServiceInstanceBuild';
@@ -96,6 +98,36 @@ function isCancellable(build: ServiceInstanceScheduledBuild) {
     build.Status === ServiceInstanceScheduledBuildStatuses.PENDING ||
     build.Status === ServiceInstanceScheduledBuildStatuses.PULLING ||
     build.Status === ServiceInstanceScheduledBuildStatuses.IMAGE_READY
+  );
+}
+
+function ScheduledBuildTargetResult({
+  buildId,
+  result,
+}: {
+  buildId: number;
+  result: ServiceInstanceScheduledBuildTargetResult;
+}) {
+  const environmentQuery = useEnvironment(
+    result.EnvironmentId,
+    (environment) => environment.Name
+  );
+  const targetStatus =
+    targetStatusBadge[result.Status] ?? {
+      type: 'muted' as const,
+      label: 'Unknown',
+    };
+  const environmentName =
+    environmentQuery.data ?? `Env #${result.EnvironmentId}`;
+
+  return (
+    <div
+      data-cy={`service-instance-scheduled-build-target-${buildId}-${result.EnvironmentId}`}
+    >
+      {environmentName}:{' '}
+      <Badge type={targetStatus.type}>{targetStatus.label}</Badge>
+      {result.Error ? ` (${result.Error})` : ''}
+    </div>
   );
 }
 
@@ -218,27 +250,15 @@ export function DeployTab({ instance }: Props) {
                   <td>
                     <Badge type={status.type}>{status.label}</Badge>
                   </td>
-                  <td>
-                    {(build.Results ?? []).map((result) => {
-                      const targetStatus =
-                        targetStatusBadge[result.Status] ?? {
-                          type: 'muted' as const,
-                          label: 'Unknown',
-                        };
-                      return (
-                        <div
+                    <td>
+                      {(build.Results ?? []).map((result) => (
+                        <ScheduledBuildTargetResult
                           key={result.EnvironmentId}
-                          data-cy={`service-instance-scheduled-build-target-${build.Id}-${result.EnvironmentId}`}
-                        >
-                          Env #{result.EnvironmentId}:{' '}
-                          <Badge type={targetStatus.type}>
-                            {targetStatus.label}
-                          </Badge>
-                          {result.Error ? ` (${result.Error})` : ''}
-                        </div>
-                      );
-                    })}
-                  </td>
+                          buildId={build.Id}
+                          result={result}
+                        />
+                      ))}
+                    </td>
                   <td>{build.Error || '-'}</td>
                   <td>
                     {isCancellable(build) && (

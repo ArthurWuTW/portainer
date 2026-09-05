@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { ReactNode } from 'react';
@@ -94,6 +94,21 @@ describe('Service Instance ItemView', () => {
     ).toBeInTheDocument();
   });
 
+  it('displays environment names in scheduled build targets', async () => {
+    renderComponent();
+
+    await screen.findByRole('heading', { name: 'production-web' });
+    await userEvent.click(screen.getByRole('button', { name: 'Deploy' }));
+
+    await waitFor(() => {
+      const target = document.querySelector(
+        '[data-cy="service-instance-scheduled-build-target-1-1"]'
+      );
+      expect(target?.textContent).toBe('environment: Pending');
+    });
+    expect(screen.queryByText(/Env #1:/)).not.toBeInTheDocument();
+  });
+
   it('renders the overview details', async () => {
     renderComponent();
 
@@ -106,6 +121,9 @@ describe('Service Instance ItemView', () => {
     expect(screen.getAllByText('si-1-production-web').length).toBeGreaterThan(
       0
     );
+    // Targets should display the group name, not "Group #1"
+    expect(await screen.findByText('group1')).toBeInTheDocument();
+    expect(screen.queryByText('Group #1')).not.toBeInTheDocument();
   });
 
   it('displays per-target results including failures in the operations tab', async () => {

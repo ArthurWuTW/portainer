@@ -1,3 +1,5 @@
+import { useGroup } from '@/react/portainer/environments/environment-groups/queries/useGroup';
+
 import { DetailsTable } from '@@/DetailsTable';
 import { Widget } from '@@/Widget';
 
@@ -8,10 +10,13 @@ interface Props {
 }
 
 export function OverviewTab({ instance }: Props) {
-  const targetLabel =
-    instance.TargetType === ServiceInstanceTargetTypes.GROUP
-      ? `Group #${instance.GroupId}`
-      : `${instance.EnvironmentIds?.length ?? 0} environments`;
+  const isGroupTarget =
+    instance.TargetType === ServiceInstanceTargetTypes.GROUP;
+  const groupQuery = useGroup(isGroupTarget ? instance.GroupId : undefined);
+
+  const targetLabel = isGroupTarget
+    ? groupQuery.data?.Name ?? `Group #${instance.GroupId}`
+    : `${instance.EnvironmentIds?.length ?? 0} environments`;
 
   return (
     <Widget>

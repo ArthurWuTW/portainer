@@ -71,6 +71,7 @@ export const handlers = [
     const group: Partial<EnvironmentGroup> = {
       Id: id,
       Name: `group${id}`,
+      Description: '',
     };
     return HttpResponse.json(group);
   }),
