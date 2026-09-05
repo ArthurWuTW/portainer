@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"strings"
+	"time"
 
 	portainer "github.com/portainer/portainer/api"
 	"github.com/portainer/portainer/api/dataservices"
@@ -70,7 +71,10 @@ func clearMacAddrs(n network.NetworkingConfig) network.NetworkingConfig {
 
 // Recreate a container
 func (c *ContainerService) Recreate(ctx context.Context, endpoint *portainer.Endpoint, containerId string, forcePullImage bool, imageTag, nodeName string) (*types.ContainerJSON, error) {
-	cli, err := c.factory.CreateClient(endpoint, nodeName, nil)
+	// Image pulls are long-running streaming operations; disable the
+	// client-level request timeout so large images don't time out mid-pull.
+	noTimeout := time.Duration(0)
+	cli, err := c.factory.CreateClient(endpoint, nodeName, &noTimeout)
 	if err != nil {
 		return nil, errors.Wrap(err, "create client error")
 	}

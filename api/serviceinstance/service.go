@@ -481,7 +481,13 @@ func (s *Service) pullImagesOnEndpoint(ctx context.Context, endpoint *portainer.
 		return errors.New("docker client factory is not available")
 	}
 
-	cli, err := s.clientFactory.CreateClient(endpoint, "", nil)
+	// Image pulls are long-running streaming operations: the Docker API
+	// streams pull progress over the response body until the image is fully
+	// downloaded. The default 60s client-level request timeout would fire
+	// mid-stream for large images, so disable it for the pull client. The
+	// overall operation is still bounded by the request context.
+	noTimeout := time.Duration(0)
+	cli, err := s.clientFactory.CreateClient(endpoint, "", &noTimeout)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create docker client for environment %d", int(endpoint.ID))
 	}
