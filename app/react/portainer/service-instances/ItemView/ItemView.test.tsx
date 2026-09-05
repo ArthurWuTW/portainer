@@ -9,6 +9,7 @@ import { withTestQueryProvider } from '@/react/test-utils/withTestQuery';
 import { withTestRouter } from '@/react/test-utils/withRouter';
 import { withUserProvider } from '@/react/test-utils/withUserProvider';
 import { UserViewModel } from '@/portainer/models/user';
+import { createMockEnvironment } from '@/react-tools/test-mocks';
 
 import {
   mockServiceInstance,
@@ -17,8 +18,10 @@ import {
   mockServiceInstanceTargets,
 } from '../test-utils/mocks';
 import {
+  ServiceInstance,
   ServiceInstanceOperationStatuses,
   ServiceInstanceTargetStatuses,
+  ServiceInstanceTargetTypes,
 } from '../types';
 
 import { ItemView } from './ItemView';
@@ -126,6 +129,21 @@ describe('Service Instance ItemView', () => {
     expect(screen.queryByText('Group #1')).not.toBeInTheDocument();
   });
 
+  it('displays environment names in the overview targets for individual environments', async () => {
+    const instance: ServiceInstance = {
+      ...mockServiceInstance,
+      TargetType: ServiceInstanceTargetTypes.ENVIRONMENTS,
+      GroupId: undefined,
+      EnvironmentIds: [1, 2],
+    };
+
+    renderComponent({ instance });
+
+    await screen.findByRole('heading', { name: 'production-web' });
+
+    expect(await screen.findByText('prod-a, prod-b')).toBeInTheDocument();
+  });
+
   it('displays per-target results including failures in the operations tab', async () => {
     const failedOperation = {
       ...mockServiceInstanceOperation,
@@ -211,6 +229,7 @@ describe('Service Instance ItemView', () => {
 
 function renderComponent(
   overrides: {
+    instance?: ServiceInstance;
     operations?: (typeof mockServiceInstanceOperation)[];
     targets?: typeof mockServiceInstanceTargets;
   } = {}
@@ -222,7 +241,21 @@ function renderComponent(
 
   server.use(
     http.get('/api/service-instances/1', () =>
-      HttpResponse.json(mockServiceInstance)
+      HttpResponse.json(overrides.instance ?? mockServiceInstance)
+    ),
+    http.get('/api/endpoints', () =>
+      HttpResponse.json(
+        [
+          createMockEnvironment({ Id: 1, Name: 'prod-a' }),
+          createMockEnvironment({ Id: 2, Name: 'prod-b' }),
+        ],
+        {
+          headers: {
+            'x-total-count': '2',
+            'x-total-available': '2',
+          },
+        }
+      )
     ),
     http.get('/api/service-instances/1/targets', () =>
       HttpResponse.json(overrides.targets ?? mockServiceInstanceTargets)

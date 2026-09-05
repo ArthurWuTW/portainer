@@ -1,4 +1,5 @@
 import { useGroup } from '@/react/portainer/environments/environment-groups/queries/useGroup';
+import { useEnvironmentList } from '@/react/portainer/environments/queries';
 
 import { DetailsTable } from '@@/DetailsTable';
 import { Widget } from '@@/Widget';
@@ -13,10 +14,25 @@ export function OverviewTab({ instance }: Props) {
   const isGroupTarget =
     instance.TargetType === ServiceInstanceTargetTypes.GROUP;
   const groupQuery = useGroup(isGroupTarget ? instance.GroupId : undefined);
+  const environmentsQuery = useEnvironmentList(
+    { pageLimit: 0 },
+    { enabled: !isGroupTarget }
+  );
+
+  const environmentIds = instance.EnvironmentIds ?? [];
+  const environmentNames = environmentIds
+    .map(
+      (id) =>
+        environmentsQuery.environments.find((e) => e.Id === id)?.Name ??
+        `#${id}`
+    )
+    .join(', ');
 
   const targetLabel = isGroupTarget
     ? groupQuery.data?.Name ?? `Group #${instance.GroupId}`
-    : `${instance.EnvironmentIds?.length ?? 0} environments`;
+    : environmentIds.length > 0 && !environmentsQuery.isLoading
+      ? environmentNames
+      : `${environmentIds.length} environments`;
 
   return (
     <Widget>

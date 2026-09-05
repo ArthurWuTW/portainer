@@ -1,5 +1,8 @@
 import { Boxes, Trash2 } from 'lucide-react';
 
+import { useEnvironmentList } from '@/react/portainer/environments/queries';
+import { useGroups } from '@/react/portainer/environments/environment-groups/queries';
+
 import { Datatable } from '@@/datatables';
 import { createPersistedStore } from '@@/datatables/types';
 import { AddButton, Button } from '@@/buttons';
@@ -11,7 +14,7 @@ import { useServiceInstances } from '../queries/useServiceInstances';
 import { useDeleteServiceInstance } from '../queries/useDeleteServiceInstance';
 import { ServiceInstance } from '../types';
 
-import { columns } from './columns';
+import { getColumns } from './columns';
 
 const tableKey = 'service-instances';
 const settingsStore = createPersistedStore(tableKey, 'Name');
@@ -20,6 +23,16 @@ export function ListView() {
   const tableState = useTableState(settingsStore, tableKey);
   const { data: instances, isLoading } = useServiceInstances();
   const deleteMutation = useDeleteServiceInstance();
+
+  const groupsQuery = useGroups();
+  const { environments } = useEnvironmentList({ pageLimit: 0 });
+
+  const environmentNames = new Map(
+    environments.map((env) => [env.Id, env.Name])
+  );
+  const groupNames = new Map(
+    (groupsQuery.data ?? []).map((group) => [group.Id, group.Name])
+  );
 
   return (
     <>
@@ -33,7 +46,7 @@ export function ListView() {
           title="Service Instances"
           titleIcon={Boxes}
           dataset={instances ?? []}
-          columns={columns}
+          columns={getColumns({ environmentNames, groupNames })}
           settingsManager={tableState}
           isLoading={isLoading}
           emptyContentLabel="No service instances"
