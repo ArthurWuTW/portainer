@@ -18,8 +18,6 @@ import {
   ServiceInstanceScheduledBuildStatuses,
   ServiceInstanceScheduledBuildTargetStatuses,
 } from '../types';
-import { useDeployServiceInstance } from '../queries/useServiceInstanceLifecycle';
-import { useUpdateServiceInstance } from '../queries/useUpdateServiceInstance';
 import { useScheduleServiceInstanceBuild } from '../queries/useScheduleServiceInstanceBuild';
 import { useCancelServiceInstanceScheduledBuild } from '../queries/useCancelServiceInstanceScheduledBuild';
 import { useServiceInstanceScheduledBuilds } from '../queries/useServiceInstanceScheduledBuilds';
@@ -106,8 +104,6 @@ export function DeployTab({ instance }: Props) {
   const [deployAt, setDeployAt] = useState<Date | null>(null);
 
   const queryClient = useQueryClient();
-  const updateMutation = useUpdateServiceInstance();
-  const deployMutation = useDeployServiceInstance();
   const scheduleMutation = useScheduleServiceInstanceBuild();
   const cancelMutation = useCancelServiceInstanceScheduledBuild();
   const scheduledBuildsQuery = useServiceInstanceScheduledBuilds(instance.Id);
@@ -127,25 +123,16 @@ export function DeployTab({ instance }: Props) {
     prevHasActiveBuild.current = hasActiveBuild;
   }, [hasActiveBuild, instance.Id, queryClient]);
 
-  const isBusy =
-    updateMutation.isLoading ||
-    deployMutation.isLoading ||
-    scheduleMutation.isLoading;
+  const isBusy = scheduleMutation.isLoading;
 
   async function handleDeploy() {
-    await updateMutation.mutateAsync({
+    await scheduleMutation.mutateAsync({
       id: instance.Id,
       payload: {
-        Name: instance.Name,
-        Description: instance.Description,
-        TargetType: instance.TargetType,
-        GroupId: instance.GroupId,
-        EnvironmentIds: instance.EnvironmentIds,
         ComposeFile: compose,
-        Env: instance.Env,
+        DeployAt: Math.floor(Date.now() / 1000),
       },
     });
-    await deployMutation.mutateAsync(instance.Id);
     notifySuccess('Success', 'Deployment started');
   }
 
