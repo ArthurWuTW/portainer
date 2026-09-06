@@ -157,28 +157,36 @@ export function DeployTab({ instance }: Props) {
   const isBusy = scheduleMutation.isLoading;
 
   async function handleDeploy() {
-    await scheduleMutation.mutateAsync({
-      id: instance.Id,
-      payload: {
-        ComposeFile: compose,
-        DeployAt: Math.floor(Date.now() / 1000),
-      },
-    });
-    notifySuccess('Success', 'Deployment started');
+    try {
+      await scheduleMutation.mutateAsync({
+        id: instance.Id,
+        payload: {
+          ComposeFile: compose,
+          DeployAt: Math.floor(Date.now() / 1000),
+        },
+      });
+      notifySuccess('Success', 'Deployment started');
+    } catch {
+      // error is surfaced by the global mutation error handler
+    }
   }
 
   async function handleSchedule() {
     if (!deployAt) {
       return;
     }
-    await scheduleMutation.mutateAsync({
-      id: instance.Id,
-      payload: {
-        ComposeFile: compose,
-        DeployAt: Math.floor(deployAt.getTime() / 1000),
-      },
-    });
-    notifySuccess('Success', 'Build scheduled');
+    try {
+      await scheduleMutation.mutateAsync({
+        id: instance.Id,
+        payload: {
+          ComposeFile: compose,
+          DeployAt: Math.floor(deployAt.getTime() / 1000),
+        },
+      });
+      notifySuccess('Success', 'Build scheduled');
+    } catch {
+      // error is surfaced by the global mutation error handler
+    }
   }
 
   return (
