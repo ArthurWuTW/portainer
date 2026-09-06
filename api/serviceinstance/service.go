@@ -295,7 +295,7 @@ func (s *Service) ScheduleBuild(ctx context.Context, instanceID portainer.Servic
 	return build, nil
 }
 
-// CancelScheduledBuild cancels a pending or pulling scheduled build.
+// CancelScheduledBuild cancels a pending, pulling, or image ready scheduled build.
 func (s *Service) CancelScheduledBuild(id portainer.ServiceInstanceScheduledBuildID) error {
 	build, err := s.dataStore.ServiceInstanceScheduledBuild().Read(id)
 	if err != nil {
@@ -303,9 +303,11 @@ func (s *Service) CancelScheduledBuild(id portainer.ServiceInstanceScheduledBuil
 	}
 
 	switch build.Status {
-	case portainer.ServiceInstanceScheduledBuildStatusPending, portainer.ServiceInstanceScheduledBuildStatusPulling:
+	case portainer.ServiceInstanceScheduledBuildStatusPending,
+		portainer.ServiceInstanceScheduledBuildStatusPulling,
+		portainer.ServiceInstanceScheduledBuildStatusImageReady:
 	default:
-		return errors.New("only pending or pulling scheduled builds can be cancelled")
+		return errors.New("only pending, pulling, or image ready scheduled builds can be cancelled")
 	}
 
 	build.Status = portainer.ServiceInstanceScheduledBuildStatusCancelled

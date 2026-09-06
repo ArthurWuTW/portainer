@@ -9557,7 +9557,7 @@ export const serviceInstanceOperationInspect = <
 /**
  * Cancel a service instance scheduled build
  *
- * Cancels a scheduled build that is still pending or pulling.
+ * Cancels a scheduled build that is still pending, pulling, or image ready.
  * **Access policy**: authenticated
  */
 export const serviceInstanceScheduledBuildCancel = <

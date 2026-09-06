@@ -439,3 +439,29 @@ func TestCancelScheduledBuild(t *testing.T) {
 	err = svc.CancelScheduledBuild(build.ID)
 	assert.Error(t, err)
 }
+
+func TestCancelScheduledBuildImageReady(t *testing.T) {
+	svc, store := newTestService(t)
+	createTestUser(t, store)
+
+	instance := &portainer.ServiceInstance{
+		Name:       "cancel-image-ready-test",
+		TargetType: portainer.ServiceInstanceTargetEnvironments,
+	}
+	require.NoError(t, svc.Create(instance))
+
+	build := &portainer.ServiceInstanceScheduledBuild{
+		ServiceInstanceID: instance.ID,
+		ComposeFile:       "services:\n  web:\n    image: nginx:latest",
+		DeployAt:          time.Now().Add(time.Hour).Unix(),
+		Status:            portainer.ServiceInstanceScheduledBuildStatusImageReady,
+	}
+	require.NoError(t, store.ServiceInstanceScheduledBuild().Create(build))
+
+	require.NoError(t, svc.CancelScheduledBuild(build.ID))
+
+	updated, err := store.ServiceInstanceScheduledBuild().Read(build.ID)
+	require.NoError(t, err)
+	assert.Equal(t, portainer.ServiceInstanceScheduledBuildStatusCancelled, updated.Status)
+	require.NotNil(t, updated.FinishedAt)
+}

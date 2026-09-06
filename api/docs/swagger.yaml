@@ -24237,7 +24237,7 @@ paths:
   /service-instance-scheduled-builds/{id}:
     delete:
       description: |-
-        Cancels a scheduled build that is still pending or pulling.
+        Cancels a scheduled build that is still pending, pulling, or image ready.
         **Access policy**: authenticated
       operationId: ServiceInstanceScheduledBuildCancel
       parameters:

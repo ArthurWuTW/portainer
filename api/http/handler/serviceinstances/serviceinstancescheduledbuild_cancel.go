@@ -11,7 +11,7 @@ import (
 
 // @id ServiceInstanceScheduledBuildCancel
 // @summary Cancel a service instance scheduled build
-// @description Cancels a scheduled build that is still pending or pulling.
+// @description Cancels a scheduled build that is still pending, pulling, or image ready.
 // @description **Access policy**: authenticated
 // @tags service_instances
 // @security ApiKeyAuth
