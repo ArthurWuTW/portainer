@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	portainer "github.com/portainer/portainer/api"
+	"github.com/portainer/portainer/api/http/utils/filters"
 	httperror "github.com/portainer/portainer/pkg/libhttp/error"
 	"github.com/portainer/portainer/pkg/libhttp/request"
 	"github.com/portainer/portainer/pkg/libhttp/response"
@@ -17,6 +18,8 @@ import (
 // @security ApiKeyAuth
 // @security jwt
 // @param id path int true "Service instance identifier"
+// @param start query int false "Pagination start index"
+// @param limit query int false "Pagination limit (0 = unlimited)"
 // @success 200 {array} portainer.ServiceInstanceOperation "Success"
 // @failure 400 "Invalid request"
 // @failure 404 "Service instance not found"
@@ -45,5 +48,9 @@ func (handler *Handler) serviceInstanceOperations(w http.ResponseWriter, r *http
 		operations[i], operations[j] = operations[j], operations[i]
 	}
 
-	return response.JSON(w, operations)
+	params := filters.ExtractListModifiersQueryParams(r)
+	results := filters.SearchOrderAndPaginate(operations, params, filters.Config[portainer.ServiceInstanceOperation]{})
+	filters.ApplyFilterResultsHeaders(&w, results)
+
+	return response.JSON(w, results.Items)
 }

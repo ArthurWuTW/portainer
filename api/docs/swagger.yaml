@@ -24456,6 +24456,14 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Pagination start index
+        in: query
+        name: start
+        type: integer
+      - description: Pagination limit (0 = unlimited)
+        in: query
+        name: limit
+        type: integer
       responses:
         "200":
           description: Success

@@ -1,7 +1,11 @@
+import { useState } from 'react';
+
 import { useEnvironment } from '@/react/portainer/environments/queries';
+import { usePaginationLimitState } from '@/react/hooks/usePaginationLimitState';
 
 import { Badge } from '@@/Badge';
 import { DetailsTable } from '@@/DetailsTable';
+import { PaginationControls } from '@@/PaginationControls';
 import { Widget } from '@@/Widget';
 
 import {
@@ -79,7 +83,15 @@ function OperationResult({ result }: { result: ServiceInstanceTargetResult }) {
 }
 
 export function OperationsTab({ instance }: Props) {
-  const operationsQuery = useServiceInstanceOperations(instance.Id);
+  const [page, setPage] = useState(0);
+  const [pageLimit, setPageLimit] = usePaginationLimitState(
+    'service-instance-operations'
+  );
+
+  const operationsQuery = useServiceInstanceOperations(instance.Id, {
+    start: page * pageLimit,
+    limit: pageLimit,
+  });
 
   if (operationsQuery.isLoading) {
     return (
@@ -106,7 +118,8 @@ export function OperationsTab({ instance }: Props) {
     );
   }
 
-  const operations = operationsQuery.data ?? [];
+  const operations = operationsQuery.data?.data ?? [];
+  const totalCount = operationsQuery.data?.totalCount ?? 0;
 
   return (
     <Widget>
@@ -147,6 +160,15 @@ export function OperationsTab({ instance }: Props) {
             );
           })}
         </DetailsTable>
+        <div className="flex justify-end pt-2">
+          <PaginationControls
+            page={page + 1}
+            pageLimit={pageLimit}
+            onPageChange={(p) => setPage(p - 1)}
+            onPageLimitChange={setPageLimit}
+            pageCount={Math.ceil(totalCount / pageLimit)}
+          />
+        </div>
       </Widget.Body>
     </Widget>
   );

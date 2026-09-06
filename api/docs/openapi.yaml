@@ -9588,6 +9588,16 @@ paths:
           required: true
           schema:
             type: integer
+        - description: Pagination start index
+          in: query
+          name: start
+          schema:
+            type: integer
+        - description: Pagination limit (0 = unlimited)
+          in: query
+          name: limit
+          schema:
+            type: integer
       responses:
         "200":
           description: Success

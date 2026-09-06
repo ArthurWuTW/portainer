@@ -1,3 +1,5 @@
+import { PaginationQueryParams } from '@/react/common/api/pagination.types';
+
 import {
   ServiceInstanceId,
   ServiceInstanceOperationId,
@@ -11,8 +13,8 @@ export const serviceInstanceQueryKeys = {
     [...serviceInstanceQueryKeys.base(), id] as const,
   targets: (id: ServiceInstanceId) =>
     [...serviceInstanceQueryKeys.base(), id, 'targets'] as const,
-  operations: (id: ServiceInstanceId) =>
-    [...serviceInstanceQueryKeys.base(), id, 'operations'] as const,
+  operations: (id: ServiceInstanceId, params?: PaginationQueryParams) =>
+    [...serviceInstanceQueryKeys.base(), id, 'operations', params] as const,
   operation: (id: ServiceInstanceOperationId) =>
     [...serviceInstanceQueryKeys.base(), 'operations', id] as const,
   scheduledBuilds: (id: ServiceInstanceId) =>

@@ -405,6 +405,69 @@ func TestServiceInstanceOperations(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, operations, 1)
 	assert.Equal(t, op.ID, operations[0].ID)
+	assert.Equal(t, "1", w.Header().Get("X-Total-Count"))
+	assert.Equal(t, "1", w.Header().Get("X-Total-Available"))
+}
+
+func TestServiceInstanceOperationsPaged(t *testing.T) {
+	h, store, _ := newTestHandler(t)
+
+	instance := &portainer.ServiceInstance{
+		Name:       "operations-paged-test",
+		TargetType: portainer.ServiceInstanceTargetEnvironments,
+	}
+	require.NoError(t, store.ServiceInstance().Create(instance))
+
+	ops := make([]*portainer.ServiceInstanceOperation, 0, 5)
+	for i := 0; i < 5; i++ {
+		op := &portainer.ServiceInstanceOperation{
+			ID:                portainer.ServiceInstanceOperationID(store.ServiceInstanceOperation().GetNextIdentifier()),
+			ServiceInstanceID: instance.ID,
+			Type:              portainer.ServiceInstanceOperationDeploy,
+			Status:            portainer.ServiceInstanceOperationStatusSuccess,
+		}
+		require.NoError(t, store.ServiceInstanceOperation().Create(op))
+		ops = append(ops, op)
+	}
+
+	// newest first: ops[4] is the newest
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, newRequestWithSecurityContext(http.MethodGet, fmt.Sprintf("/service-instances/%d/operations?start=0&limit=2", instance.ID), nil))
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var operations []portainer.ServiceInstanceOperation
+	err := json.Unmarshal(w.Body.Bytes(), &operations)
+	require.NoError(t, err)
+	require.Len(t, operations, 2)
+	assert.Equal(t, ops[4].ID, operations[0].ID)
+	assert.Equal(t, ops[3].ID, operations[1].ID)
+	assert.Equal(t, "5", w.Header().Get("X-Total-Count"))
+	assert.Equal(t, "5", w.Header().Get("X-Total-Available"))
+
+	// second page
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, newRequestWithSecurityContext(http.MethodGet, fmt.Sprintf("/service-instances/%d/operations?start=2&limit=2", instance.ID), nil))
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	operations = nil
+	err = json.Unmarshal(w.Body.Bytes(), &operations)
+	require.NoError(t, err)
+	require.Len(t, operations, 2)
+	assert.Equal(t, ops[2].ID, operations[0].ID)
+	assert.Equal(t, ops[1].ID, operations[1].ID)
+
+	// start beyond the end returns an empty list
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, newRequestWithSecurityContext(http.MethodGet, fmt.Sprintf("/service-instances/%d/operations?start=10&limit=2", instance.ID), nil))
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	operations = nil
+	err = json.Unmarshal(w.Body.Bytes(), &operations)
+	require.NoError(t, err)
+	require.Empty(t, operations)
 }
 
 func TestServiceInstanceOperationInspect(t *testing.T) {

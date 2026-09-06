@@ -1,4 +1,9 @@
 import axios, { parseAxiosError } from '@/portainer/services/axios/axios';
+import {
+  PaginationQueryParams,
+  PaginatedResults,
+  withPaginationHeaders,
+} from '@/react/common/api/pagination.types';
 
 import {
   ServiceInstance,
@@ -78,13 +83,15 @@ export async function getServiceInstanceTargets(
 }
 
 export async function getServiceInstanceOperations(
-  id: number
-): Promise<ServiceInstanceOperation[]> {
+  id: number,
+  params?: PaginationQueryParams
+): Promise<PaginatedResults<ServiceInstanceOperation[]>> {
   try {
-    const { data } = await axios.get<ServiceInstanceOperation[]>(
-      `${baseUrl}/${id}/operations`
+    const { data, headers } = await axios.get<ServiceInstanceOperation[]>(
+      `${baseUrl}/${id}/operations`,
+      { params }
     );
-    return data;
+    return withPaginationHeaders({ data, headers });
   } catch (e) {
     throw parseAxiosError(e, 'Unable to retrieve service instance operations');
   }

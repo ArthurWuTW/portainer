@@ -283,9 +283,15 @@ function renderComponent(
     http.get('/api/service-instances/1/targets', () =>
       HttpResponse.json(overrides.targets ?? mockServiceInstanceTargets)
     ),
-    http.get('/api/service-instances/1/operations', () =>
-      HttpResponse.json(overrides.operations ?? [mockServiceInstanceOperation])
-    ),
+    http.get('/api/service-instances/1/operations', () => {
+      const operations = overrides.operations ?? [mockServiceInstanceOperation];
+      return HttpResponse.json(operations, {
+        headers: {
+          'x-total-count': String(operations.length),
+          'x-total-available': String(operations.length),
+        },
+      });
+    }),
     http.get('/api/service-instances/1/scheduled-builds', () =>
       HttpResponse.json([mockServiceInstanceScheduledBuild])
     )
