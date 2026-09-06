@@ -1,8 +1,11 @@
-import { Boxes } from 'lucide-react';
+import { Boxes, PencilIcon } from 'lucide-react';
+import { useRouter } from '@uirouter/react';
 
 import { Badge } from '@@/Badge';
 import { Icon } from '@@/Icon';
 import { ResourceDetailHeader } from '@@/ResourceDetailHeader/ResourceDetailHeader';
+import { ActionBarShell } from '@@/ResourceDetailHeader/ActionBarShell';
+import { ActionBarButton } from '@@/ResourceDetailHeader/ActionBarButton';
 
 import { ServiceInstance, ServiceInstanceStatuses } from '../types';
 
@@ -32,6 +35,8 @@ interface Props {
 }
 
 export function ServiceInstanceResourceHeader({ instance }: Props) {
+  const router = useRouter();
+
   return (
     <ResourceDetailHeader
       icon={<Icon icon={Boxes} size="xl" />}
@@ -42,6 +47,21 @@ export function ServiceInstanceResourceHeader({ instance }: Props) {
         </Badge>
       }
       description={instance.Description || undefined}
+      actionBar={
+        <ActionBarShell>
+          <ActionBarButton
+            icon={PencilIcon}
+            onClick={() =>
+              router.stateService.go('portainer.service-instances.item.edit', {
+                id: instance.Id,
+              })
+            }
+            data-cy="service-instance-edit-button"
+          >
+            Edit
+          </ActionBarButton>
+        </ActionBarShell>
+      }
     />
   );
 }

@@ -64,6 +64,20 @@ describe('Service Instance ItemView', () => {
     expect(screen.getByText('Running')).toBeInTheDocument();
   });
 
+  it('renders an edit button that navigates to the edit view', async () => {
+    renderComponent();
+
+    await screen.findByRole('heading', { name: 'production-web' });
+
+    const editButton = screen.getByRole('button', { name: 'Edit' });
+    expect(editButton).toBeInTheDocument();
+    await userEvent.click(editButton);
+    expect(go).toHaveBeenCalledWith(
+      'portainer.service-instances.item.edit',
+      { id: 1 }
+    );
+  });
+
   it('renders the tab navigation', async () => {
     renderComponent();
 
