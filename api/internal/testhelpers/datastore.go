@@ -404,6 +404,31 @@ func WithEndpoints(endpoints []portainer.Endpoint) datastoreOption {
 	}
 }
 
+type stubEndpointGroupService struct {
+	dataservices.EndpointGroupService
+
+	groups []portainer.EndpointGroup
+}
+
+func (s *stubEndpointGroupService) BucketName() string { return "endpoint_groups" }
+
+func (s *stubEndpointGroupService) ReadAll(predicates ...func(portainer.EndpointGroup) bool) ([]portainer.EndpointGroup, error) {
+	filtered := s.groups
+
+	for _, p := range predicates {
+		filtered = slicesx.Filter(filtered, p)
+	}
+
+	return filtered, nil
+}
+
+// WithEndpointGroups option will instruct testDatastore to return provided endpoint groups
+func WithEndpointGroups(groups []portainer.EndpointGroup) datastoreOption {
+	return func(d *testDatastore) {
+		d.endpointGroup = &stubEndpointGroupService{groups: groups}
+	}
+}
+
 type stubStacksService struct {
 	dataservices.StackService
 	stacks []portainer.Stack

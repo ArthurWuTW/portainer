@@ -8,6 +8,7 @@ import userActivityModule from './user-activity';
 import servicesModule from './services';
 import { reactModule } from './react';
 import { sidebarModule } from './react/views/sidebar';
+import { aiChatModule } from './react/views/aiChat';
 import environmentsModule from './environments';
 import { helpersModule } from './helpers';
 import { AccessHeaders, requiresAuthHook } from './authorization-guard';
@@ -29,6 +30,7 @@ angular
     servicesModule,
     reactModule,
     sidebarModule,
+    aiChatModule,
     environmentsModule,
     helpersModule,
   ])
@@ -60,6 +62,9 @@ angular
         views: {
           'sidebar@': {
             component: 'sidebar',
+          },
+          'chatbot@': {
+            component: 'aiChat',
           },
         },
         data: {
@@ -150,6 +155,7 @@ angular
             controllerAs: 'ctrl',
           },
           'sidebar@': {},
+          'chatbot@': {},
         },
         data: {
           access: undefined,
@@ -169,6 +175,7 @@ angular
             controllerAs: 'ctrl',
           },
           'sidebar@': {},
+          'chatbot@': {},
         },
         data: {
           access: undefined,
@@ -416,6 +423,7 @@ angular
         url: '/init',
         views: {
           'sidebar@': {},
+          'chatbot@': {},
         },
         data: {
           access: undefined,

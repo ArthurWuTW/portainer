@@ -6,6 +6,7 @@ import { useHeaderContext } from './HeaderContainer';
 import { NotificationsMenu } from './NotificationsMenu';
 import { UserMenu } from './UserMenu';
 import { AskAILink } from './AskAILink';
+import { AIChatToggle } from './AIChatToggle';
 
 export function HeaderTitle() {
   useHeaderContext();
@@ -13,6 +14,7 @@ export function HeaderTitle() {
   return (
     <div className="flex items-center">
       {isBE && <AskAILink />}
+      <AIChatToggle />
       <NotificationsMenu />
       <ContextHelp />
       {!window.ddExtension && <UserMenu />}

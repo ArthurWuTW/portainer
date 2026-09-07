@@ -17,6 +17,7 @@ import (
 	"github.com/portainer/portainer/api/filesystem"
 	"github.com/portainer/portainer/api/gitops/scheduling"
 	"github.com/portainer/portainer/api/http/csrf"
+	aihandler "github.com/portainer/portainer/api/http/handler/ai"
 	"github.com/portainer/portainer/api/http/handler"
 	"github.com/portainer/portainer/api/http/handler/auth"
 	"github.com/portainer/portainer/api/http/handler/backup"
@@ -132,6 +133,10 @@ func (server *Server) Start(ctx context.Context) error {
 	offlineGate := offlinegate.NewOfflineGate()
 
 	passwordStrengthChecker := security.NewPasswordStrengthChecker(server.DataStore.Settings())
+
+	var aiHandler = aihandler.NewHandler(requestBouncer)
+	aiHandler.DataStore = server.DataStore
+	aiHandler.DockerClientFactory = server.DockerClientFactory
 
 	var authHandler = auth.NewHandler(requestBouncer, rateLimiter, passwordStrengthChecker, server.KubernetesClientFactory)
 	authHandler.DataStore = server.DataStore
@@ -313,6 +318,7 @@ func (server *Server) Start(ctx context.Context) error {
 	webhookHandler.DockerClientFactory = server.DockerClientFactory
 
 	server.Handler = &handler.Handler{
+		AIHandler:              aiHandler,
 		RoleHandler:            roleHandler,
 		AuthHandler:            authHandler,
 		BackupHandler:          backupHandler,

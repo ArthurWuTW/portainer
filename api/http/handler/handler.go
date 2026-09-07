@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	aihandler "github.com/portainer/portainer/api/http/handler/ai"
 	"github.com/portainer/portainer/api/http/handler/auth"
 	"github.com/portainer/portainer/api/http/handler/backup"
 	"github.com/portainer/portainer/api/http/handler/customtemplates"
@@ -42,6 +43,7 @@ import (
 
 // Handler is a collection of all the service handlers.
 type Handler struct {
+	AIHandler              *aihandler.Handler
 	AuthHandler            *auth.Handler
 	BackupHandler          *backup.Handler
 	CustomTemplatesHandler *customtemplates.Handler
@@ -208,6 +210,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case strings.HasPrefix(r.URL.Path, "/api/endpoints") && strings.Contains(r.URL.Path, "/edge/"):
 		h.EndpointEdgeHandler.ServeHTTP(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/ai"):
+		http.StripPrefix("/api", h.AIHandler).ServeHTTP(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/auth"):
 		http.StripPrefix("/api", h.AuthHandler).ServeHTTP(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/backup"):

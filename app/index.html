@@ -40,6 +40,8 @@
     >
       <div id="sideview" ui-view="sidebar" ng-if="!applicationState.loading"></div>
 
+      <div id="chatbot" ui-view="chatbot" ng-if="!applicationState.loading"></div>
+
       <div id="content-wrapper">
         <div class="page-content">
           <div class="page-wrapper" ng-if="applicationState.loading">
