@@ -253,7 +253,7 @@ function ToolChip({ tool }: { tool: ToolEvent }) {
     tool.status === 'running'
       ? 'text-blue-1 th-dark:text-blue-1'
       : tool.status === 'done'
-        ? 'text-success-1 th-dark:text-success-1'
+        ? 'text-success-7 th-dark:text-success-3'
         : 'text-danger-1 th-dark:text-danger-1';
 
   return (
