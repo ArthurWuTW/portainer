@@ -5,6 +5,8 @@ This fork of Portainer Community Edition adds two major features on top of upstr
 - **Service Instances** — define a service once and roll it out to many environments in a single operation, with live monitoring, scheduled deployments, and full lifecycle control.
 - **AI Assistant** — an in-UI chat panel backed by any OpenAI-compatible LLM, with read-only tools that let the model inspect your Portainer environments, stacks, and containers.
 
+![Screenshot](./image/image1.png)
+
 ## Service Instances
 
 A Service Instance is a logical orchestration object that groups a set of target environments (an endpoint group or a list of individual environments) and deploys a shared Compose definition to all of them.
