@@ -156,7 +156,11 @@ function InnerPanel({ width }: { width: number }) {
         ) : (
           <div className="space-y-3">
             {messages.map((msg, i) => (
-              <MessageBubble key={i} message={msg} />
+              <MessageBubble
+                key={i}
+                message={msg}
+                animate={i === messages.length - 1 && msg.role === 'assistant'}
+              />
             ))}
             {toolEvents.length > 0 && (
               <div className="space-y-1">
@@ -226,8 +230,45 @@ function InnerPanel({ width }: { width: number }) {
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function useTypewriter(text: string, enabled: boolean) {
+  const [displayed, setDisplayed] = useState('');
+
+  useEffect(() => {
+    if (!enabled || displayed.length >= text.length) {
+      return;
+    }
+
+    const id = setTimeout(() => {
+      if (!text.startsWith(displayed)) {
+        setDisplayed('');
+        return;
+      }
+      const remaining = text.slice(displayed.length);
+      const nextChunk =
+        remaining.match(/^\s*\S+\s*/)?.[0] ?? remaining.slice(0, 1);
+      setDisplayed(displayed + nextChunk);
+    }, 30);
+
+    return () => clearTimeout(id);
+  }, [displayed, text, enabled]);
+
+  if (!enabled) {
+    return text;
+  }
+
+  return displayed;
+}
+
+function MessageBubble({
+  message,
+  animate,
+}: {
+  message: ChatMessage;
+  animate: boolean;
+}) {
   const isUser = message.role === 'user';
+  const content = useTypewriter(message.content, animate && !isUser);
+
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>
       <div
@@ -238,8 +279,8 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             : 'max-w-[85%] rounded-lg bg-gray-2 px-3 py-2 text-sm text-gray-10 th-dark:bg-gray-11 th-dark:text-gray-1'
         }
       >
-        {message.content ? (
-          <Markdown className="ai-chat-markdown">{message.content}</Markdown>
+        {content ? (
+          <Markdown className="ai-chat-markdown">{content}</Markdown>
         ) : isUser ? null : (
           '…'
         )}
