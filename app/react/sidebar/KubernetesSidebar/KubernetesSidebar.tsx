@@ -160,7 +160,6 @@ export function KubernetesSidebar({ environmentId }: Props) {
         icon={Server}
         to="kubernetes.cluster"
         params={{ endpointId: environmentId }}
-        pathOptions={{ includePaths: ['kubernetes.registries'] }}
         data-cy="k8sSidebar-cluster-area"
         listId="k8sSidebar-cluster-area"
       >
@@ -218,14 +217,6 @@ export function KubernetesSidebar({ environmentId }: Props) {
             />
           </Authorized>
         )}
-
-        <SidebarItem
-          to="kubernetes.registries"
-          params={{ endpointId: environmentId }}
-          label="Registries"
-          isSubMenu
-          data-cy="k8sSidebar-registries"
-        />
       </SidebarParent>
     </>
   );

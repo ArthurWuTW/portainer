@@ -50,9 +50,6 @@ describe('SettingsSidebar', () => {
       expect(
         screen.getByTestId('portainerSidebar-environments-area')
       ).toBeInTheDocument();
-      expect(
-        screen.getByTestId('portainerSidebar-registries')
-      ).toBeInTheDocument();
       expect(screen.getByTestId('k8sSidebar-logs')).toBeInTheDocument();
       expect(
         screen.getByTestId('portainerSidebar-notifications')
@@ -206,9 +203,6 @@ describe('SettingsSidebar', () => {
       expect(
         screen.queryByTestId('portainerSidebar-environments-area')
       ).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId('portainerSidebar-registries')
-      ).not.toBeInTheDocument();
       expect(screen.queryByTestId('k8sSidebar-logs')).not.toBeInTheDocument();
       expect(
         screen.queryByTestId('portainerSidebar-settings')
@@ -237,9 +231,6 @@ describe('SettingsSidebar', () => {
       ).not.toBeInTheDocument();
       expect(
         screen.queryByTestId('portainerSidebar-environments-area')
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId('portainerSidebar-registries')
       ).not.toBeInTheDocument();
       expect(screen.queryByTestId('k8sSidebar-logs')).not.toBeInTheDocument();
       expect(
@@ -284,9 +275,6 @@ describe('SettingsSidebar', () => {
 
       expect(
         screen.getByTestId('portainerSidebar-environments-area')
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId('portainerSidebar-registries')
       ).toBeInTheDocument();
       expect(
         screen.getByTestId('portainerSidebar-settings')
