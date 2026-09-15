@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { Boxes, Home } from 'lucide-react';
+import { Boxes, Home, Network } from 'lucide-react';
 
 import { useIsEdgeAdmin, useIsPureAdmin } from '@/react/hooks/useUser';
 import { useIsCurrentUserTeamLeader } from '@/portainer/users/queries';
@@ -76,6 +76,13 @@ function InnerSidebar() {
               icon={Boxes}
               label="Service Instances"
               data-cy="portainerSidebar-service-instances"
+            />
+
+            <SidebarItem
+              to="portainer.registry-proxy"
+              icon={Network}
+              label="Registry Proxy"
+              data-cy="portainerSidebar-registry-proxy"
             />
 
             {isAdmin && <EdgeComputeSidebar />}

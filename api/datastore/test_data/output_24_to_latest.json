@@ -140,6 +140,7 @@
       "Username": "prabhatkhera"
     }
   ],
+  "registry_proxies": null,
   "resource_control": [
     {
       "AdministratorsOnly": false,

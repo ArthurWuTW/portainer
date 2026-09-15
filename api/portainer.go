@@ -1063,6 +1063,30 @@ type (
 		AccessTokenExpiry int64            `json:"AccessTokenExpiry,omitempty"`
 	}
 
+	// RegistryProxy represents a proxy exposing a local Docker registry
+	// through Portainer, authenticated with Portainer credentials
+	RegistryProxy struct {
+		// Registry Proxy Identifier
+		ID RegistryProxyID `json:"Id" example:"1"`
+		// Registry Proxy Name
+		Name string `json:"Name" example:"my-local-registry"`
+		// URL or IP address of the local Docker registry proxied by Portainer (host:port, without scheme)
+		URL string `json:"URL" example:"registry.local:5000"`
+		// Use TLS to contact the local registry
+		TLS bool `json:"TLS" example:"false"`
+		// Skip the verification of the local registry TLS certificate
+		TLSSkipVerify bool `json:"TLSSkipVerify" example:"false"`
+		// Is authentication against the local registry enabled
+		Authentication bool `json:"Authentication" example:"false"`
+		// Username used to authenticate against the local registry
+		Username string `json:"Username" example:"registry user"`
+		// Password used to authenticate against the local registry
+		Password string `json:"Password,omitempty" example:"registry_password"`
+	}
+
+	// RegistryProxyID represents a registry proxy identifier
+	RegistryProxyID int
+
 	// RegistryType represents a type of registry
 	RegistryType int
 

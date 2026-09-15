@@ -22,6 +22,7 @@ import (
 	"github.com/portainer/portainer/api/dataservices/helmuserrepository"
 	"github.com/portainer/portainer/api/dataservices/pendingactions"
 	"github.com/portainer/portainer/api/dataservices/registry"
+	"github.com/portainer/portainer/api/dataservices/registryproxy"
 	"github.com/portainer/portainer/api/dataservices/resourcecontrol"
 	"github.com/portainer/portainer/api/dataservices/role"
 	"github.com/portainer/portainer/api/dataservices/schedule"
@@ -68,6 +69,7 @@ type Store struct {
 	ExtensionService                     *extension.Service
 	HelmUserRepositoryService            *helmuserrepository.Service
 	RegistryService                      *registry.Service
+	RegistryProxyService                 *registryproxy.Service
 	ResourceControlService               *resourcecontrol.Service
 	RoleService                          *role.Service
 	APIKeyRepositoryService              *apikeyrepository.Service
@@ -178,6 +180,12 @@ func (store *Store) initServices() error {
 		return err
 	}
 	store.RegistryService = registryService
+
+	registryProxyService, err := registryproxy.NewService(store.connection)
+	if err != nil {
+		return err
+	}
+	store.RegistryProxyService = registryProxyService
 
 	resourcecontrolService, err := resourcecontrol.NewService(store.connection)
 	if err != nil {
@@ -361,6 +369,11 @@ func (store *Store) Registry() dataservices.RegistryService {
 	return store.RegistryService
 }
 
+// RegistryProxy gives access to the Registry Proxy data management layer
+func (store *Store) RegistryProxy() dataservices.RegistryProxyService {
+	return store.RegistryProxyService
+}
+
 // ResourceControl gives access to the ResourceControl data management layer
 func (store *Store) ResourceControl() dataservices.ResourceControlService {
 	return store.ResourceControlService
@@ -466,6 +479,7 @@ type storeExport struct {
 	Extensions                    []portainer.Extension                     `json:"extension,omitempty"`
 	HelmUserRepository            []portainer.HelmUserRepository            `json:"helm_user_repository,omitempty"`
 	Registry                      []portainer.Registry                      `json:"registries,omitempty"`
+	RegistryProxy                 []portainer.RegistryProxy                 `json:"registry_proxies,omitempty"`
 	ResourceControl               []portainer.ResourceControl               `json:"resource_control,omitempty"`
 	Role                          []portainer.Role                          `json:"roles,omitempty"`
 	Schedules                     []portainer.Schedule                      `json:"schedules,omitempty"`
@@ -569,6 +583,14 @@ func (store *Store) Export(filename string) (err error) {
 		}
 	} else {
 		backup.Registry = r
+	}
+
+	if r, err := store.RegistryProxy().ReadAll(); err != nil {
+		if !store.IsErrObjectNotFound(err) {
+			log.Error().Err(err).Msg("exporting Registry Proxies")
+		}
+	} else {
+		backup.RegistryProxy = r
 	}
 
 	if c, err := store.ResourceControl().ReadAll(); err != nil {
@@ -804,6 +826,12 @@ func (store *Store) Import(filename string) (err error) {
 	for _, v := range backup.Registry {
 		if err := store.Registry().Update(v.ID, &v); err != nil {
 			log.Warn().Err(err).Msg("failed to update the registry in the database")
+		}
+	}
+
+	for _, v := range backup.RegistryProxy {
+		if err := store.RegistryProxy().Update(v.ID, &v); err != nil {
+			log.Warn().Err(err).Msg("failed to update the registry proxy in the database")
 		}
 	}
 

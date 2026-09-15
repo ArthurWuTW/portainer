@@ -35,6 +35,8 @@ func NewTools() []Tool {
 		&getNetworksTool{},
 		&getVolumesTool{},
 		&getSystemInfoTool{},
+		&listRegistryProxiesTool{},
+		&getRegistryProxyImagesTool{},
 	}
 }
 

@@ -22,6 +22,7 @@ import { usersModule } from './users';
 import { environmentsModule } from './environments';
 import { gitopsViewsModule } from './gitops';
 import { serviceInstancesModule } from './service-instances';
+import { registryProxyModule } from './registry-proxy';
 
 export const viewsModule = angular
   .module('portainer.app.react.views', [
@@ -36,6 +37,7 @@ export const viewsModule = angular
     environmentsModule,
     gitopsViewsModule,
     serviceInstancesModule,
+    registryProxyModule,
   ])
   .component(
     'homeView',

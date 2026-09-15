@@ -19,6 +19,7 @@ type (
 		EndpointRelation() EndpointRelationService
 		HelmUserRepository() HelmUserRepositoryService
 		Registry() RegistryService
+		RegistryProxy() RegistryProxyService
 		ResourceControl() ResourceControlService
 		Role() RoleService
 		APIKeyRepository() APIKeyRepository
@@ -159,6 +160,11 @@ type (
 	// RegistryService represents a service for managing registry data
 	RegistryService interface {
 		BaseCRUD[portainer.Registry, portainer.RegistryID]
+	}
+
+	// RegistryProxyService represents a service for managing registry proxy data
+	RegistryProxyService interface {
+		BaseCRUD[portainer.RegistryProxy, portainer.RegistryProxyID]
 	}
 
 	// ResourceControlService represents a service for managing resource control data

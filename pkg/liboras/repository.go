@@ -28,6 +28,25 @@ func ListRepositories(ctx context.Context, registry *portainer.Registry, registr
 	return listClient.ListRepositories(ctx)
 }
 
+// ListTags retrieves all tags of a repository
+func ListTags(ctx context.Context, registryClient *remote.Registry, repositoryName string) ([]string, error) {
+	repository, err := registryClient.Repository(ctx, repositoryName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository handle: %w", err)
+	}
+
+	var tags []string
+	err = repository.Tags(ctx, "", func(tagList []string) error {
+		tags = append(tags, tagList...)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tags of repository %q: %w", repositoryName, err)
+	}
+
+	return tags, nil
+}
+
 // FilterRepositoriesByMediaType filters repositories to only include those with the expected media type
 func FilterRepositoriesByMediaType(ctx context.Context, repositoryNames []string, registryClient *remote.Registry, expectedMediaType string) ([]string, error) {
 	// Run concurrently as this can take 10s+ to complete in serial

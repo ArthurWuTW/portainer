@@ -23,6 +23,7 @@ import (
 	"github.com/portainer/portainer/api/http/handler/ldap"
 	"github.com/portainer/portainer/api/http/handler/motd"
 	"github.com/portainer/portainer/api/http/handler/registries"
+	"github.com/portainer/portainer/api/http/handler/registryproxies"
 	"github.com/portainer/portainer/api/http/handler/resourcecontrols"
 	"github.com/portainer/portainer/api/http/handler/roles"
 	"github.com/portainer/portainer/api/http/handler/serviceinstances"
@@ -63,6 +64,7 @@ type Handler struct {
 	LDAPHandler            *ldap.Handler
 	MOTDHandler            *motd.Handler
 	RegistryHandler        *registries.Handler
+	RegistryProxyHandler   *registryproxies.Handler
 	ResourceControlHandler *resourcecontrols.Handler
 	RoleHandler            *roles.Handler
 	ServiceInstanceHandler *serviceinstances.Handler
@@ -258,6 +260,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/api", h.MOTDHandler).ServeHTTP(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/registries"):
 		http.StripPrefix("/api", h.RegistryHandler).ServeHTTP(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/registry-proxies"):
+		http.StripPrefix("/api", h.RegistryProxyHandler).ServeHTTP(w, r)
+	case r.URL.Path == "/v2" || strings.HasPrefix(r.URL.Path, "/v2/"):
+		h.RegistryProxyHandler.ServeHTTP(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/resource_controls"):
 		http.StripPrefix("/api", h.ResourceControlHandler).ServeHTTP(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/roles"):

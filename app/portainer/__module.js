@@ -417,6 +417,37 @@ angular
         },
       };
 
+      var registryProxy = {
+        name: 'portainer.registry-proxy',
+        url: '/registry-proxy',
+        data: { docs: '/user/registry-proxy' },
+        views: {
+          'content@': {
+            component: 'registryProxyListView',
+          },
+        },
+      };
+
+      var registryProxyDetail = {
+        name: 'portainer.registry-proxy.item',
+        url: '/:id',
+        views: {
+          'content@': {
+            component: 'registryProxyItemView',
+          },
+        },
+      };
+
+      var registryProxyCreate = {
+        name: 'portainer.registry-proxy.new',
+        url: '/new',
+        views: {
+          'content@': {
+            component: 'registryProxyCreateView',
+          },
+        },
+      };
+
       var init = {
         name: 'portainer.init',
         abstract: true,
@@ -557,6 +588,9 @@ angular
       $stateRegistryProvider.register(serviceInstanceDetail);
       $stateRegistryProvider.register(serviceInstanceCreate);
       $stateRegistryProvider.register(serviceInstanceEdit);
+      $stateRegistryProvider.register(registryProxy);
+      $stateRegistryProvider.register(registryProxyDetail);
+      $stateRegistryProvider.register(registryProxyCreate);
       $stateRegistryProvider.register(init);
       $stateRegistryProvider.register(initAdmin);
       $stateRegistryProvider.register(initEdge);

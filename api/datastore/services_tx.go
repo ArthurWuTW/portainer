@@ -60,6 +60,10 @@ func (tx *StoreTx) Registry() dataservices.RegistryService {
 	return tx.store.RegistryService.Tx(tx.tx)
 }
 
+func (tx *StoreTx) RegistryProxy() dataservices.RegistryProxyService {
+	return tx.store.RegistryProxyService.Tx(tx.tx)
+}
+
 func (tx *StoreTx) ResourceControl() dataservices.ResourceControlService {
 	return tx.store.ResourceControlService.Tx(tx.tx)
 }

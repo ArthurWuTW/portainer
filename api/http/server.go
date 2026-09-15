@@ -17,8 +17,8 @@ import (
 	"github.com/portainer/portainer/api/filesystem"
 	"github.com/portainer/portainer/api/gitops/scheduling"
 	"github.com/portainer/portainer/api/http/csrf"
-	aihandler "github.com/portainer/portainer/api/http/handler/ai"
 	"github.com/portainer/portainer/api/http/handler"
+	aihandler "github.com/portainer/portainer/api/http/handler/ai"
 	"github.com/portainer/portainer/api/http/handler/auth"
 	"github.com/portainer/portainer/api/http/handler/backup"
 	"github.com/portainer/portainer/api/http/handler/customtemplates"
@@ -37,6 +37,7 @@ import (
 	"github.com/portainer/portainer/api/http/handler/ldap"
 	"github.com/portainer/portainer/api/http/handler/motd"
 	"github.com/portainer/portainer/api/http/handler/registries"
+	"github.com/portainer/portainer/api/http/handler/registryproxies"
 	"github.com/portainer/portainer/api/http/handler/resourcecontrols"
 	"github.com/portainer/portainer/api/http/handler/roles"
 	"github.com/portainer/portainer/api/http/handler/serviceinstances"
@@ -236,6 +237,10 @@ func (server *Server) Start(ctx context.Context) error {
 	registryHandler.ProxyManager = server.ProxyManager
 	registryHandler.K8sClientFactory = server.KubernetesClientFactory
 
+	var registryProxyHandler = registryproxies.NewHandler(requestBouncer)
+	registryProxyHandler.DataStore = server.DataStore
+	registryProxyHandler.CryptoService = server.CryptoService
+
 	var resourceControlHandler = resourcecontrols.NewHandler(requestBouncer)
 	resourceControlHandler.DataStore = server.DataStore
 
@@ -339,6 +344,7 @@ func (server *Server) Start(ctx context.Context) error {
 		KubernetesHandler:      kubernetesHandler,
 		MOTDHandler:            motdHandler,
 		RegistryHandler:        registryHandler,
+		RegistryProxyHandler:   registryProxyHandler,
 		ResourceControlHandler: resourceControlHandler,
 		ServiceInstanceHandler: serviceInstanceHandler,
 		SettingsHandler:        settingsHandler,
