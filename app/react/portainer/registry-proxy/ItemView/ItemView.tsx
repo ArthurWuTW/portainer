@@ -213,7 +213,7 @@ export function ItemView() {
                         loadingText="Deleting..."
                         confirmMessage={`This will remove '${selectedRepository}:${tag.Name}' from the registry. Continue?`}
                         onConfirmed={() =>
-                          deleteImageMutation.mutateAsync(tag.Name)
+                          deleteImageMutation.mutate(tag.Name)
                         }
                         data-cy={`registry-proxy-delete-${tag.Name}`}
                       />
@@ -233,12 +233,12 @@ export function ItemView() {
     </>
   );
 
-  async function handleAddTag() {
+  function handleAddTag() {
     if (!selectedRepository) {
       return;
     }
 
-    await addTagMutation.mutateAsync(
+    addTagMutation.mutate(
       {
         repository: selectedRepository,
         source: retagSource,

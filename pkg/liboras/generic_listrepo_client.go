@@ -3,6 +3,7 @@ package liboras
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	portainer "github.com/portainer/portainer/api"
 	"oras.land/oras-go/v2/registry/remote"
@@ -40,7 +41,7 @@ func (c *GenericListRepoClient) ListRepositories(ctx context.Context) ([]string,
 		return nil
 	})
 	if err != nil {
-		return nil, errors.New("failed to list repositories")
+		return nil, fmt.Errorf("failed to list repositories: %w", err)
 	}
 
 	return repositories, nil
