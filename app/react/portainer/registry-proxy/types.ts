@@ -24,9 +24,16 @@ export interface RegistryCatalog {
   repositories: string[];
 }
 
+export interface RegistryTag {
+  name: string;
+  digest: string;
+  size: number;
+  created?: string;
+}
+
 export interface RegistryTags {
   repository: string;
-  tags: string[];
+  tags: RegistryTag[];
 }
 
 export interface RegistryTagPayload {

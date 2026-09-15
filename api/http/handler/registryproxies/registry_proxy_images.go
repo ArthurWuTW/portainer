@@ -75,7 +75,8 @@ func (handler *Handler) registryProxyCatalog(w http.ResponseWriter, r *http.Requ
 
 // @id RegistryProxyTags
 // @summary List image versions (tags) for a repository
-// @description Retrieve the list of tags for a repository inside the proxied local registry.
+// @description Retrieve the list of tags for a repository inside the proxied local registry,
+// @description along with the manifest digest, size and image creation date of each tag.
 // @description **Access policy**: authenticated
 // @tags registry_proxies
 // @security ApiKeyAuth
@@ -87,9 +88,19 @@ func (handler *Handler) registryProxyCatalog(w http.ResponseWriter, r *http.Requ
 // @failure 404 "Registry proxy not found"
 // @failure 500 "Server error"
 // @router /registry-proxies/{id}/tags [get]
+type registryProxyTagResponse struct {
+	Name string `json:"name" example:"1.2.3"`
+	// Digest of the image manifest the tag points to
+	Digest string `json:"digest" example:"sha256:0d71218243f2f1ab0e9ae548f13c4fe233ce2b955015209ed36548ebb434d69f"`
+	// Size in bytes of the image manifest
+	Size int64 `json:"size" example:"1672"`
+	// Creation date of the image, null if the registry does not expose one
+	Created *time.Time `json:"created" example:"2024-05-02T08:31:24Z"`
+}
+
 type registryProxyTagsResponse struct {
-	Repository string   `json:"repository"`
-	Tags       []string `json:"tags"`
+	Repository string                     `json:"repository"`
+	Tags       []registryProxyTagResponse `json:"tags"`
 }
 
 func (handler *Handler) registryProxyTags(w http.ResponseWriter, r *http.Request) *httperror.HandlerError {
@@ -113,13 +124,24 @@ func (handler *Handler) registryProxyTags(w http.ResponseWriter, r *http.Request
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
-	tags, err := liboras.ListTags(ctx, registryClient, repository)
+	tagInfos, err := liboras.ListTagsWithInfo(ctx, registryClient, repository)
 	if err != nil {
 		return httperror.InternalServerError("Unable to list tags from the registry", err)
 	}
 
-	if tags == nil {
-		tags = []string{}
+	tags := make([]registryProxyTagResponse, 0, len(tagInfos))
+	for _, tagInfo := range tagInfos {
+		var created *time.Time
+		if !tagInfo.Created.IsZero() {
+			created = &tagInfo.Created
+		}
+
+		tags = append(tags, registryProxyTagResponse{
+			Name:    tagInfo.Tag,
+			Digest:  tagInfo.Digest,
+			Size:    tagInfo.Size,
+			Created: created,
+		})
 	}
 
 	return response.JSON(w, registryProxyTagsResponse{Repository: repository, Tags: tags})

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"time"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	portainer "github.com/portainer/portainer/api"
@@ -45,6 +46,179 @@ func ListTags(ctx context.Context, registryClient *remote.Registry, repositoryNa
 	}
 
 	return tags, nil
+}
+
+// TagInfo holds a tag together with the metadata read from its manifest
+type TagInfo struct {
+	Tag     string
+	Digest  string
+	Size    int64
+	Created time.Time
+}
+
+// manifestEnvelope covers an image manifest, a manifest list and an OCI index,
+// as all of them are JSON documents sharing most of their fields
+type manifestEnvelope struct {
+	ocispec.Manifest
+	Manifests []ocispec.Descriptor `json:"manifests,omitempty"`
+}
+
+// maxManifestDepth limits how deep manifest lists are followed looking for a creation date
+const maxManifestDepth = 3
+
+// tagInspectConcurrency is the number of tags inspected concurrently
+const tagInspectConcurrency = 10
+
+// ListTagsWithInfo retrieves all tags of a repository enriched with the manifest digest,
+// size and image creation date. Metadata is read on a best effort basis, so a tag pointing
+// to an unreachable manifest is still returned, without any metadata.
+func ListTagsWithInfo(ctx context.Context, registryClient *remote.Registry, repositoryName string) ([]TagInfo, error) {
+	repository, err := registryClient.Repository(ctx, repositoryName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository handle: %w", err)
+	}
+
+	var tags []string
+	err = repository.Tags(ctx, "", func(tagList []string) error {
+		tags = append(tags, tagList...)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tags of repository %q: %w", repositoryName, err)
+	}
+
+	var tasks []concurrent.Func
+	for _, tag := range tags {
+		task := func(ctx context.Context) (any, error) {
+			return describeTag(ctx, repository, tag), nil
+		}
+		tasks = append(tasks, task)
+	}
+
+	results, err := concurrent.Run(ctx, tagInspectConcurrency, tasks...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect tags of repository %q: %w", repositoryName, err)
+	}
+
+	tagInfos := make([]TagInfo, 0, len(results))
+	for _, result := range results {
+		if tagInfo, ok := result.Result.(TagInfo); ok {
+			tagInfos = append(tagInfos, tagInfo)
+		}
+	}
+
+	sort.Slice(tagInfos, func(i, j int) bool {
+		return tagInfos[i].Tag < tagInfos[j].Tag
+	})
+
+	return tagInfos, nil
+}
+
+// describeTag resolves a tag and collects the metadata of the manifest it points to
+func describeTag(ctx context.Context, repository registry.Repository, tag string) TagInfo {
+	tagInfo := TagInfo{Tag: tag}
+
+	descriptor, err := repository.Resolve(ctx, tag)
+	if err != nil {
+		return tagInfo
+	}
+
+	tagInfo.Digest = descriptor.Digest.String()
+	tagInfo.Size = descriptor.Size
+	tagInfo.Created = findCreatedDate(ctx, repository, descriptor, 0)
+
+	return tagInfo
+}
+
+// findCreatedDate looks for the creation date in the manifest annotations, then in the
+// referenced image config, then in the first child manifest of a manifest list.
+// It returns a zero time when the registry exposes no creation date.
+func findCreatedDate(ctx context.Context, repository registry.Repository, descriptor ocispec.Descriptor, depth int) time.Time {
+	if depth >= maxManifestDepth {
+		return time.Time{}
+	}
+
+	manifest, err := fetchManifest(ctx, repository, descriptor)
+	if err != nil {
+		return time.Time{}
+	}
+
+	if created, ok := parseCreatedDate(manifest.Annotations[ocispec.AnnotationCreated]); ok {
+		return created
+	}
+
+	if created := fetchConfigCreatedDate(ctx, repository, manifest.Config); !created.IsZero() {
+		return created
+	}
+
+	if len(manifest.Manifests) > 0 {
+		return findCreatedDate(ctx, repository, manifest.Manifests[0], depth+1)
+	}
+
+	return time.Time{}
+}
+
+// fetchManifest reads and decodes the manifest content of a descriptor
+func fetchManifest(ctx context.Context, repository registry.Repository, descriptor ocispec.Descriptor) (manifestEnvelope, error) {
+	var manifest manifestEnvelope
+
+	manifestReader, err := repository.Manifests().Fetch(ctx, descriptor)
+	if err != nil {
+		return manifest, err
+	}
+	defer logs.CloseAndLogErr(manifestReader)
+
+	content, err := io.ReadAll(manifestReader)
+	if err != nil {
+		return manifest, err
+	}
+
+	if err := json.Unmarshal(content, &manifest); err != nil {
+		return manifest, err
+	}
+
+	return manifest, nil
+}
+
+// fetchConfigCreatedDate reads the 'created' field out of an image config blob
+func fetchConfigCreatedDate(ctx context.Context, repository registry.Repository, config ocispec.Descriptor) time.Time {
+	if config.Digest == "" {
+		return time.Time{}
+	}
+
+	configReader, err := repository.Blobs().Fetch(ctx, config)
+	if err != nil {
+		return time.Time{}
+	}
+	defer logs.CloseAndLogErr(configReader)
+
+	content, err := io.ReadAll(configReader)
+	if err != nil {
+		return time.Time{}
+	}
+
+	var imageConfig struct {
+		Created *time.Time `json:"created"`
+	}
+	if err := json.Unmarshal(content, &imageConfig); err != nil || imageConfig.Created == nil {
+		return time.Time{}
+	}
+
+	return imageConfig.Created.UTC()
+}
+
+// parseCreatedDate parses an RFC 3339 timestamp as found in OCI annotations
+func parseCreatedDate(value string) (time.Time, bool) {
+	if value == "" {
+		return time.Time{}, false
+	}
+
+	created, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return time.Time{}, false
+	}
+
+	return created.UTC(), true
 }
 
 // FilterRepositoriesByMediaType filters repositories to only include those with the expected media type

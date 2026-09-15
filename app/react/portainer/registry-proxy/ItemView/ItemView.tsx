@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 
+import { localizeDate } from '@/react/common/date-utils';
 import { useIdParam } from '@/react/hooks/useIdParam';
 import { notifySuccess } from '@/portainer/services/notifications';
 
@@ -10,7 +11,7 @@ import { Datatable } from '@@/datatables';
 import { createPersistedStore } from '@@/datatables/types';
 import { useTableState } from '@@/datatables/useTableState';
 import { Alert } from '@@/Alert';
-import { Button, LoadingButton } from '@@/buttons';
+import { LoadingButton } from '@@/buttons';
 import { DeleteButton } from '@@/buttons/DeleteButton';
 import { FormControl } from '@@/form-components/FormControl';
 import { Input } from '@@/form-components/Input';
@@ -24,8 +25,11 @@ import {
   useDeleteRegistryImage,
 } from '../queries/useRegistryProxyMutations';
 
+import { RepositoryTree } from './RepositoryTree';
+
 interface TagRow {
   Name: string;
+  Created?: string;
 }
 
 const tagColumnHelper = createColumnHelper<TagRow>();
@@ -129,24 +133,13 @@ export function ItemView() {
               catalogQuery.data.repositories.length === 0 && (
                 <span>No images in this registry.</span>
               )}
-            <div className="flex flex-wrap gap-2">
-              {catalogQuery.data?.repositories.map((repository) => (
-                <Button
-                  key={repository}
-                  size="small"
-                  color="default"
-                  className={
-                    selectedRepository === repository
-                      ? '!bg-[var(--primary-50)]'
-                      : undefined
-                  }
-                  onClick={() => setSelectedRepository(repository)}
-                  data-cy={`registry-proxy-repository-${repository}`}
-                >
-                  {repository}
-                </Button>
-              ))}
-            </div>
+            {catalogQuery.data && catalogQuery.data.repositories.length > 0 && (
+              <RepositoryTree
+                repositories={catalogQuery.data.repositories}
+                selectedRepository={selectedRepository}
+                onSelectRepository={setSelectedRepository}
+              />
+            )}
           </div>
 
           {selectedRepository && (
@@ -165,8 +158,8 @@ export function ItemView() {
                       setRetagSource((value as string) ?? '')
                     }
                     options={(tagsQuery.data?.tags ?? []).map((tag) => ({
-                      value: tag,
-                      label: tag,
+                      value: tag.name,
+                      label: tag.name,
                     }))}
                     placeholder="Source tag"
                     isLoading={tagsQuery.isLoading}
@@ -199,10 +192,20 @@ export function ItemView() {
               <Datatable
                 title={`Versions of ${selectedRepository}`}
                 dataset={(tagsQuery.data?.tags ?? []).map((tag) => ({
-                  Name: tag,
+                  Name: tag.name,
+                  Created: tag.created,
                 }))}
                 columns={[
                   tagColumnHelper.accessor('Name', { header: 'Version (tag)' }),
+                  tagColumnHelper.accessor('Created', {
+                    header: 'Created',
+                    sortingFn: 'datetime',
+                    cell: ({ getValue }) => {
+                      const created = getValue();
+
+                      return created ? localizeDate(new Date(created)) : '-';
+                    },
+                  }),
                   tagColumnHelper.display({
                     id: 'actions',
                     header: 'Actions',
@@ -212,9 +215,7 @@ export function ItemView() {
                         text="Delete"
                         loadingText="Deleting..."
                         confirmMessage={`This will remove '${selectedRepository}:${tag.Name}' from the registry. Continue?`}
-                        onConfirmed={() =>
-                          deleteImageMutation.mutate(tag.Name)
-                        }
+                        onConfirmed={() => deleteImageMutation.mutate(tag.Name)}
                         data-cy={`registry-proxy-delete-${tag.Name}`}
                       />
                     ),
