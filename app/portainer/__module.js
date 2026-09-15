@@ -430,7 +430,11 @@ angular
 
       var registryProxyDetail = {
         name: 'portainer.registry-proxy.item',
-        url: '/:id',
+        url: '/:id?repository&tag',
+        params: {
+          repository: { dynamic: true },
+          tag: { dynamic: true },
+        },
         views: {
           'content@': {
             component: 'registryProxyItemView',

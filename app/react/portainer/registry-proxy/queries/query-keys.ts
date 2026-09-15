@@ -9,4 +9,6 @@ export const registryProxyQueryKeys = {
     [...registryProxyQueryKeys.base(), id, 'catalog'] as const,
   tags: (id: RegistryProxyId, repository: string) =>
     [...registryProxyQueryKeys.base(), id, 'tags', repository] as const,
+  tag: (id: RegistryProxyId, repository: string, tag: string) =>
+    [...registryProxyQueryKeys.tags(id, repository), tag] as const,
 };
