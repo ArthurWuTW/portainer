@@ -3,6 +3,7 @@ package registryproxies
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	portainer "github.com/portainer/portainer/api"
@@ -216,8 +217,16 @@ func (handler *Handler) registryProxyManifestDelete(w http.ResponseWriter, r *ht
 		return httperror.InternalServerError("Unable to create registry client", err)
 	}
 
-	if err := liboras.DeleteManifestByReference(registryClient, repository, reference); err != nil {
-		return httperror.InternalServerError("Unable to delete the manifest from the registry", err)
+	// Deleting by digest removes the manifest (and every tag pointing to it),
+	// which is the expected behavior. Deleting by tag must only untag that
+	// single tag without affecting sibling tags pointing to the same manifest.
+	if strings.Contains(reference, ":") {
+		err = liboras.DeleteManifestByDigest(registryClient, repository, reference)
+	} else {
+		err = liboras.SafeDeleteTags(registryClient, repository, []string{reference})
+	}
+	if err != nil {
+		return httperror.InternalServerError("Unable to delete the image from the registry", err)
 	}
 
 	return response.Empty(w)
