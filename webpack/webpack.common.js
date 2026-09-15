@@ -113,6 +113,12 @@ module.exports = {
         target: 'http://localhost:9000',
         ws: true,
       },
+      {
+        // Docker registry v2 API passthrough for the registry proxy
+        // (e.g. docker pull localhost:8999/registry-proxy/<id>/<image>:<tag>)
+        context: ['/v2'],
+        target: 'http://localhost:9000',
+      },
     ],
     open: true,
     devMiddleware: {

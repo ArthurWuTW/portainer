@@ -31,6 +31,10 @@ func (handler *Handler) portainerAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, ok := r.BasicAuth()
 		if !ok {
+			// advertise the Basic challenge so docker clients retry with their
+			// stored credentials instead of failing on a bare 401
+			w.Header().Set("WWW-Authenticate", `Basic realm="Portainer Registry Proxy", charset="UTF-8"`)
+
 			handler.requestBouncer.AuthenticatedAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				tokenData, err := security.RetrieveTokenData(r)
 				if err != nil {
