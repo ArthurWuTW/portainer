@@ -66,6 +66,13 @@ func (handler *Handler) registryProxyCatalog(w http.ResponseWriter, r *http.Requ
 		return httperror.InternalServerError("Unable to list repositories from the registry", err)
 	}
 
+	// Hide repositories left empty by tag deletions, so a repository whose last
+	// image was deleted disappears from the catalog as well.
+	repositories, err = liboras.FilterRepositoriesWithTags(ctx, registryClient, repositories)
+	if err != nil {
+		return httperror.InternalServerError("Unable to filter empty repositories from the registry", err)
+	}
+
 	if repositories == nil {
 		repositories = []string{}
 	}
@@ -241,11 +248,13 @@ func (handler *Handler) registryProxyManifestDelete(w http.ResponseWriter, r *ht
 
 	// Deleting by digest removes the manifest (and every tag pointing to it),
 	// which is the expected behavior. Deleting by tag must only untag that
-	// single tag without affecting sibling tags pointing to the same manifest.
+	// single tag without affecting sibling tags pointing to the same manifest,
+	// and must delete the manifest itself when it is the only tag left in the
+	// repository, so the empty repository disappears as well.
 	if strings.Contains(reference, ":") {
 		err = liboras.DeleteManifestByDigest(registryClient, repository, reference)
 	} else {
-		err = liboras.SafeDeleteTags(registryClient, repository, []string{reference})
+		err = liboras.DeleteTag(registryClient, repository, reference)
 	}
 	if err != nil {
 		return httperror.InternalServerError("Unable to delete the image from the registry", err)

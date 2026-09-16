@@ -1,7 +1,11 @@
+import { Pencil } from 'lucide-react';
+
 import { useIdParam } from '@/react/hooks/useIdParam';
 
 import { PageHeader } from '@@/PageHeader';
 import { Alert } from '@@/Alert';
+import { Button } from '@@/buttons';
+import { Link } from '@@/Link';
 
 import { useRegistryProxy } from '../queries/useRegistryProxy';
 import { useRegistryProxyCatalog } from '../queries/useRegistryProxyCatalog';
@@ -50,7 +54,22 @@ export function ItemView() {
           ...(tag ? [{ label: tag }] : []),
         ]}
         reload
-      />
+      >
+        <Button
+          color="primary"
+          size="large"
+          icon={Pencil}
+          className="!m-0"
+          as={Link}
+          props={{
+            to: 'portainer.registry-proxy.item.edit',
+            params: { id },
+          }}
+          data-cy="registry-proxy-edit-button"
+        >
+          Edit
+        </Button>
+      </PageHeader>
 
       {proxyQuery.error && (
         <div className="mx-4">
@@ -92,6 +111,15 @@ export function ItemView() {
               tag={tag}
               proxyPath={proxyPath}
               onBack={() => navigation.openRepository(repository)}
+              onDeleted={() => {
+                // Once the repository's last tag is gone, the repository
+                // disappears from the registry, so drop back to the proxy.
+                if ((tagsQuery.data?.tags.length ?? 0) <= 1) {
+                  navigation.openProxy();
+                } else {
+                  navigation.openRepository(repository);
+                }
+              }}
             />
           ) : repository ? (
             <RepositoryView

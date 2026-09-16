@@ -260,6 +260,45 @@ func FilterRepositoriesByMediaType(ctx context.Context, repositoryNames []string
 	return repositories, nil
 }
 
+// FilterRepositoriesWithTags keeps only the repositories that have at least one tag.
+// A repository whose last tag has been deleted lingers in the registry catalog
+// with no visible content, so those empty repositories are filtered out.
+func FilterRepositoriesWithTags(ctx context.Context, registryClient *remote.Registry, repositoryNames []string) ([]string, error) {
+	// Run concurrently as this can take a while to complete in serial
+	var tasks []concurrent.Func
+	for _, repoName := range repositoryNames {
+		name := repoName
+		task := func(ctx context.Context) (any, error) {
+			tags, err := ListTags(ctx, registryClient, name)
+			if err != nil {
+				// Treat a repository whose tags cannot be read as empty, so a
+				// single unreachable repository does not break the catalog
+				return nil, nil
+			}
+
+			if len(tags) > 0 {
+				return name, nil
+			}
+			return nil, nil
+		}
+		tasks = append(tasks, task)
+	}
+
+	results, err := concurrent.Run(ctx, tagInspectConcurrency, tasks...)
+	if err != nil {
+		return nil, err
+	}
+
+	repositories := make([]string, 0, len(repositoryNames))
+	for _, result := range results {
+		if repoName, ok := result.Result.(string); ok {
+			repositories = append(repositories, repoName)
+		}
+	}
+
+	return repositories, nil
+}
+
 // HasMediaType checks if a repository has artifacts with the specified media type
 func HasMediaType(ctx context.Context, repository registry.Repository, expectedMediaType string) bool {
 	// Check the first available tag

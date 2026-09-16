@@ -452,6 +452,16 @@ angular
         },
       };
 
+      var registryProxyEdit = {
+        name: 'portainer.registry-proxy.item.edit',
+        url: '/edit',
+        views: {
+          'content@': {
+            component: 'registryProxyEditView',
+          },
+        },
+      };
+
       var init = {
         name: 'portainer.init',
         abstract: true,
@@ -595,6 +605,7 @@ angular
       $stateRegistryProvider.register(registryProxy);
       $stateRegistryProvider.register(registryProxyDetail);
       $stateRegistryProvider.register(registryProxyCreate);
+      $stateRegistryProvider.register(registryProxyEdit);
       $stateRegistryProvider.register(init);
       $stateRegistryProvider.register(initAdmin);
       $stateRegistryProvider.register(initEdge);

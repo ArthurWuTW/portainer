@@ -104,6 +104,52 @@ func PointTagToDummy(registryClient *remote.Registry, repository, tagName, dummy
 	return AddTagToManifest(registryClient, repository, tagName, dummyDigest, manifestBytes)
 }
 
+// DeleteTag deletes a single tag without affecting sibling tags pointing to
+// the same manifest. When no other tag points at the manifest anymore, the
+// manifest itself is deleted as well, so no untagged image is left behind and
+// the repository disappears once its last tag is removed.
+func DeleteTag(registryClient *remote.Registry, repository, tag string) error {
+	ctx := context.Background()
+
+	repo, err := registryClient.Repository(ctx, repository)
+	if err != nil {
+		return fmt.Errorf("failed to get repository handle: %w", err)
+	}
+
+	descriptor, err := repo.Resolve(ctx, tag)
+	if err != nil {
+		return fmt.Errorf("failed to resolve tag %q: %w", tag, err)
+	}
+
+	tags, err := ListTags(ctx, registryClient, repository)
+	if err != nil {
+		return fmt.Errorf("failed to list tags of repository %q: %w", repository, err)
+	}
+
+	for _, other := range tags {
+		if other == tag {
+			continue
+		}
+
+		otherDescriptor, err := repo.Resolve(ctx, other)
+		if err != nil {
+			// The sibling manifest is unreachable, so it is unknown whether it
+			// shares the manifest of the tag being deleted. Fall back to the
+			// dummy manifest flow, which can only ever remove the target tag.
+			return SafeDeleteTags(registryClient, repository, []string{tag})
+		}
+
+		if otherDescriptor.Digest == descriptor.Digest {
+			// Another tag shares the manifest: only untag the requested tag.
+			return SafeDeleteTags(registryClient, repository, []string{tag})
+		}
+	}
+
+	// The deleted tag is the only reference to the manifest, so removing the
+	// manifest removes the tag and leaves no untagged image behind.
+	return DeleteManifestByDigest(registryClient, repository, descriptor.Digest.String())
+}
+
 // SafeDeleteTags safely deletes multiple tags without affecting others pointing to the same manifest
 func SafeDeleteTags(registryClient *remote.Registry, repository string, tagsToDelete []string) error {
 	if len(tagsToDelete) == 0 {

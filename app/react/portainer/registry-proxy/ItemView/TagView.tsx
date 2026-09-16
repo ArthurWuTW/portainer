@@ -19,9 +19,17 @@ interface Props {
   tag: string;
   proxyPath: string;
   onBack: () => void;
+  onDeleted: () => void;
 }
 
-export function TagView({ id, repository, tag, proxyPath, onBack }: Props) {
+export function TagView({
+  id,
+  repository,
+  tag,
+  proxyPath,
+  onBack,
+  onDeleted,
+}: Props) {
   const tagQuery = useRegistryProxyTag(id, repository, tag);
   const deleteImageMutation = useDeleteRegistryImage(id, repository);
   const tagData = tagQuery.data;
@@ -63,10 +71,9 @@ export function TagView({ id, repository, tag, proxyPath, onBack }: Props) {
           text="Delete"
           loadingText="Deleting..."
           confirmMessage={`This will remove '${repository}:${tag}' from the registry. Continue?`}
-          onConfirmed={() => {
-            deleteImageMutation.mutate(tag);
-            onBack();
-          }}
+          onConfirmed={() =>
+            deleteImageMutation.mutate(tag, { onSuccess: onDeleted })
+          }
           data-cy="registry-proxy-tag-delete-button"
         />
       </div>

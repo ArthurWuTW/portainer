@@ -152,6 +152,12 @@ func (t *getRegistryProxyImagesTool) Execute(ctx context.Context, args json.RawM
 		return "", fmt.Errorf("failed to list repositories: %w", err)
 	}
 
+	// Hide repositories left empty by tag deletions, matching the UI catalog
+	repositories, err = liboras.FilterRepositoriesWithTags(ctx, registryClient, repositories)
+	if err != nil {
+		return "", fmt.Errorf("failed to filter empty repositories: %w", err)
+	}
+
 	return marshalResult(map[string]any{
 		"registryProxy": proxy.Name,
 		"repositories":  capStrings(repositories, maxRegistryItems),

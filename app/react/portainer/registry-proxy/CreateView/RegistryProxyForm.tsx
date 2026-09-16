@@ -35,26 +35,32 @@ interface Props {
   ) => Promise<void>;
   submitLabel: string;
   submitLoadingLabel: string;
+  isEditing?: boolean;
 }
 
-const validationSchema = object({
-  name: string().required('Name is required'),
-  url: string().required('Registry URL is required'),
-  username: string().when('authentication', {
-    is: true,
-    then: string().required('Username is required'),
-  }),
-  password: string().when('authentication', {
-    is: true,
-    then: string().required('Password is required'),
-  }),
-});
+function getValidationSchema(isEditing: boolean) {
+  return object({
+    name: string().required('Name is required'),
+    url: string().required('Registry URL is required'),
+    username: string().when('authentication', {
+      is: true,
+      then: string().required('Username is required'),
+    }),
+    password: isEditing
+      ? string()
+      : string().when('authentication', {
+          is: true,
+          then: string().required('Password is required'),
+        }),
+  });
+}
 
 export function RegistryProxyForm({
   initialValues,
   onSubmit,
   submitLabel,
   submitLoadingLabel,
+  isEditing = false,
 }: Props) {
   const formikRef = useRef<FormikProps<RegistryProxyFormValues>>(null);
   useCanExit(() => !formikRef.current?.dirty || confirmGenericDiscard());
@@ -64,13 +70,14 @@ export function RegistryProxyForm({
       innerRef={formikRef}
       initialValues={initialValues}
       onSubmit={onSubmit}
-      validationSchema={validationSchema}
+      validationSchema={getValidationSchema(isEditing)}
       validateOnMount
       enableReinitialize
     >
       <InnerForm
         submitLabel={submitLabel}
         submitLoadingLabel={submitLoadingLabel}
+        isEditing={isEditing}
       />
     </Formik>
   );
@@ -79,9 +86,14 @@ export function RegistryProxyForm({
 interface InnerFormProps {
   submitLabel: string;
   submitLoadingLabel: string;
+  isEditing: boolean;
 }
 
-function InnerForm({ submitLabel, submitLoadingLabel }: InnerFormProps) {
+function InnerForm({
+  submitLabel,
+  submitLoadingLabel,
+  isEditing,
+}: InnerFormProps) {
   const { values, errors, handleChange, setFieldValue, isValid, isSubmitting } =
     useFormikContext<RegistryProxyFormValues>();
 
@@ -166,9 +178,14 @@ function InnerForm({ submitLabel, submitLoadingLabel }: InnerFormProps) {
 
           <FormControl
             label="Password"
-            required
+            required={!isEditing}
             errors={errors.password}
             inputId="registry-proxy-password"
+            tooltip={
+              isEditing
+                ? 'Leave blank to keep the current password.'
+                : undefined
+            }
           >
             <Input
               id="registry-proxy-password"
@@ -176,6 +193,7 @@ function InnerForm({ submitLabel, submitLoadingLabel }: InnerFormProps) {
               type="password"
               value={values.password}
               onChange={handleChange}
+              placeholder={isEditing ? 'Unchanged' : undefined}
               data-cy="registry-proxy-password-input"
             />
           </FormControl>

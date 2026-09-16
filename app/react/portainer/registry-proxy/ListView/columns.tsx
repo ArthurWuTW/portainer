@@ -1,7 +1,9 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { Pencil } from 'lucide-react';
 
 import { Badge } from '@@/Badge';
 import { Link } from '@@/Link';
+import { Button } from '@@/buttons';
 
 import { RegistryProxy } from '../types';
 
@@ -38,6 +40,24 @@ export function getColumns() {
         <Badge type={getValue() ? 'success' : 'muted'}>
           {getValue() ? 'Enabled' : 'Disabled'}
         </Badge>
+      ),
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row: { original: proxy } }) => (
+        <Button
+          color="link"
+          icon={Pencil}
+          as={Link}
+          props={{
+            to: 'portainer.registry-proxy.item.edit',
+            params: { id: proxy.Id },
+          }}
+          data-cy={`registry-proxy-edit-${proxy.Id}`}
+        >
+          Edit
+        </Button>
       ),
     }),
   ];

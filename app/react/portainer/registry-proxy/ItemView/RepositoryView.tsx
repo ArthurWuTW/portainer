@@ -39,6 +39,8 @@ export function RepositoryView({ id, repository, onBack }: Props) {
   const deleteImageMutation = useDeleteRegistryImage(id, repository);
   const tableState = useTableState(settingsStore, tableKey);
 
+  const tagCount = tagsQuery.data?.tags.length ?? 0;
+
   return (
     <Datatable
       title={`Versions of ${repository}`}
@@ -89,7 +91,17 @@ export function RepositoryView({ id, repository, onBack }: Props) {
               text="Delete"
               loadingText="Deleting..."
               confirmMessage={`This will remove '${repository}:${tag.Name}' from the registry. Continue?`}
-              onConfirmed={() => deleteImageMutation.mutate(tag.Name)}
+              onConfirmed={() =>
+                deleteImageMutation.mutate(tag.Name, {
+                  onSuccess: () => {
+                    // The repository disappears from the registry once its
+                    // last tag is deleted, so leave its now dead view.
+                    if (tagCount <= 1) {
+                      onBack();
+                    }
+                  },
+                })
+              }
               data-cy={`registry-proxy-delete-${tag.Name}`}
             />
           ),
